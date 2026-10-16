@@ -1,0 +1,1548 @@
+[
+  {
+    "id": "fanvil-v67",
+    "model": "Fanvil V67",
+    "series": "V Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "V Serisi Amiral Gemisi Video Telefon",
+    "badge": "Amiral Gemisi",
+    "shortDescription": "7 inç ayarlanabilir dokunmatik ekranlı, 5MP HD dahili kameralı, Android 9.0 işletim sistemli ve antibakteriyel yüzeyli amiral gemisi görüntülü IP telefon.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "PoE",
+      "Gigabit",
+      "Dokunmatik Android",
+      "Kameralı",
+      "Antibakteriyel"
+    ],
+    "compareSpecs": {
+      "screen": "7\" (1024x600) Ayarlanabilir Dokunmatik",
+      "sipLines": "20 SIP Hattı",
+      "dssKeys": "112 DSS Tuşu",
+      "connectivity": "2.4G/5G Wi-Fi, BT 5.0, Çift Gigabit",
+      "poe": "Dahili PoE",
+      "protection": "TÜV Antibakteriyel Yüzey",
+      "audioVideo": "5MP 1080p Kamera, H.264, Opus"
+    },
+    "specs": {
+      "SIP Hat ve DSS": "20 SIP Hattı, 112 Tek Dokunuşlu DSS Tuşu",
+      "Ekran ve Kamera": "7 inç (1024x600) Ayarlanabilir Dokunmatik, 5MP 1080p Kamera",
+      "Kablosuz": "Dahili 2.4G/5G Çift Bant Wi-Fi ve Bluetooth 5.0",
+      "Özel Tasarım": "Antibakteriyel Ahize/Tuş Takımı ve RGB Işıklı Tuşlar"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20230714/11044x08v2.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/v%20series%20ip%20phone/20220321/7299.html"
+  },
+  {
+    "id": "fanvil-v66-pro",
+    "model": "Fanvil V66 Pro",
+    "series": "V Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "V Serisi Üst Düzey İş Telefonu",
+    "badge": "Bluetooth Ahizeli",
+    "shortDescription": "7 inç ayarlanabilir IPS dokunmatik ekran, kablosuz Bluetooth ahize, antibakteriyel yüzey ve Wi-Fi 6 desteğiyle üst düzey yönetici telefonu.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "PoE",
+      "Gigabit",
+      "Dokunmatik Android",
+      "Antibakteriyel"
+    ],
+    "compareSpecs": {
+      "screen": "7\" (1024x600) IPS Dokunmatik",
+      "sipLines": "20 SIP Hattı",
+      "dssKeys": "116 DSS Tuşu",
+      "connectivity": "Wi-Fi 6, BT 5.4, Çift Gigabit",
+      "poe": "Dahili PoE",
+      "protection": "Antibakteriyel, Kablosuz BT Ahize",
+      "audioVideo": "HD Ses (Opus/G.722), H.264 Video Alımı"
+    },
+    "specs": {
+      "SIP Hat ve DSS": "20 SIP Hattı, 116 Sanal DSS Tuşu",
+      "Ekran": "7 inç (1024x600) Ayarlanabilir IPS Dokunmatik Ekran",
+      "Ahize": "Kablosuz Şarjlı Bluetooth Ahize",
+      "Kablosuz": "Dahili Çift Bant Wi-Fi 6 ve Bluetooth 5.4"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20241205/1712j4flvv.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/v%20series%20ip%20phone/20241205/9269.html"
+  },
+  {
+    "id": "fanvil-v66",
+    "model": "Fanvil V66",
+    "series": "V Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "V Serisi Üst Düzey İş Telefonu",
+    "badge": "7\" Dokunmatik",
+    "shortDescription": "7 inç ayarlanabilir IPS dokunmatik ekran, 20 SIP hattı, 116 DSS tuşu, dahili çift bant Wi-Fi 6 ve Bluetooth 5.4 destekli kurumsal yönetici telefonu.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "PoE",
+      "Gigabit",
+      "Dokunmatik Android",
+      "Antibakteriyel"
+    ],
+    "compareSpecs": {
+      "screen": "7\" (1024x600) IPS Dokunmatik",
+      "sipLines": "20 SIP Hattı",
+      "dssKeys": "116 DSS Tuşu",
+      "connectivity": "Wi-Fi 6, BT 5.4, Çift Gigabit",
+      "poe": "Dahili PoE",
+      "protection": "Antibakteriyel Yüzey",
+      "audioVideo": "HD Ses, 1080p Video Çağrı Alımı"
+    },
+    "specs": {
+      "SIP Hat ve DSS": "20 SIP Hattı, 116 DSS Tuşu",
+      "Ekran": "7 inç (1024x600) Ayarlanabilir IPS Dokunmatik",
+      "Kablosuz": "Dahili 2.4G/5G Wi-Fi 6 ve Bluetooth 5.4",
+      "Ağ": "Çift Gigabit Ethernet, PoE"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20241205/1721b4hxb6.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/v%20series%20ip%20phone/20241205/9270.html"
+  },
+  {
+    "id": "fanvil-v65",
+    "model": "Fanvil V65",
+    "series": "V Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "V Serisi İş Telefonları",
+    "badge": "Çok Satan",
+    "shortDescription": "4.3 inç ayarlanabilir renkli ekranlı, dahili çift bant Wi-Fi ve Bluetooth 5.0 destekli üst düzey yönetici IP telefonu.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "PoE",
+      "Gigabit",
+      "Renkli LCD",
+      "Antibakteriyel"
+    ],
+    "compareSpecs": {
+      "screen": "4.3\" (480x272) Ayarlanabilir IPS",
+      "sipLines": "20 SIP Hattı",
+      "dssKeys": "45 DSS/BLF Tuşu",
+      "connectivity": "2.4G/5G Wi-Fi, BT 5.0, Çift Gigabit",
+      "poe": "Dahili PoE",
+      "protection": "Antibakteriyel Yüzey",
+      "audioVideo": "HD Ses, 6 Yönlü Konferans, H.264 Video Alımı"
+    },
+    "specs": {
+      "SIP Hat ve DSS": "20 SIP Hattı, 45 DSS/BLF Tuşu",
+      "Ekran": "4.3 inç Ayarlanabilir IPS Renkli Ekran",
+      "Kablosuz": "Entegre 2.4G/5G Wi-Fi ve Bluetooth 5.0",
+      "Ağ": "Çift Gigabit Ethernet Portu, Entegre PoE"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20230605/1347062820.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/v%20series%20ip%20phone/20220321/7300.html"
+  },
+  {
+    "id": "fanvil-v64",
+    "model": "Fanvil V64",
+    "series": "V Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "V Serisi İş Telefonları",
+    "badge": "Wi-Fi & BT Dahili",
+    "shortDescription": "3.5 inç renkli LCD ekran, 12 SIP hattı, 21 DSS tuşu, dahili çift bant Wi-Fi ve Bluetooth 5.0 ile modern ofisler için kurumsal IP telefon.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "PoE",
+      "Gigabit",
+      "Renkli LCD"
+    ],
+    "compareSpecs": {
+      "screen": "3.5\" (480x320) Renkli LCD",
+      "sipLines": "12 SIP Hattı",
+      "dssKeys": "21 DSS Tuşu",
+      "connectivity": "2.4G/5G Wi-Fi, BT 5.0, Çift Gigabit",
+      "poe": "Dahili PoE",
+      "protection": "Kurumsal Ofis",
+      "audioVideo": "HD Ses (G.722/Opus), 6 Yönlü Konferans"
+    },
+    "specs": {
+      "SIP Hat ve DSS": "12 SIP Hattı, 21 DSS Tuşu",
+      "Ekran": "3.5 inç (480x320) Renkli LCD",
+      "Kablosuz": "Dahili 2.4G/5G Wi-Fi ve Bluetooth",
+      "Ağ": "Çift Gigabit Port, PoE"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20230605/1354v6806j.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/v%20series%20ip%20phone/20220321/7301.html"
+  },
+  {
+    "id": "fanvil-v63",
+    "model": "Fanvil V63",
+    "series": "V Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "V Serisi İş Telefonları",
+    "badge": "Kurumsal Standart",
+    "shortDescription": "2.8 inç renkli ekran, 6 SIP hattı, 21 DSS tuşu, çift Gigabit PoE port ve şık kristal tuş takımıyla kurumsal masaüstü IP telefon.",
+    "highlights": [
+      "PoE",
+      "Gigabit",
+      "Renkli LCD"
+    ],
+    "compareSpecs": {
+      "screen": "2.8\" (320x240) Renkli LCD",
+      "sipLines": "6 SIP Hattı",
+      "dssKeys": "21 DSS Tuşu",
+      "connectivity": "Çift Gigabit Ethernet",
+      "poe": "Dahili PoE",
+      "protection": "Kurumsal Ofis",
+      "audioVideo": "HD Ses, 6 Yönlü Konferans"
+    },
+    "specs": {
+      "SIP Hat ve DSS": "6 SIP Hattı, 21 DSS Tuşu",
+      "Ekran": "2.8 inç Renkli Ekran",
+      "Ağ": "Çift Gigabit Port, PoE",
+      "Ses": "Opus ve G.722 HD Ses"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20230919/10056ndxtb.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/v%20series%20ip%20phone/20230919/8545.html"
+  },
+  {
+    "id": "fanvil-v62-pro",
+    "model": "Fanvil V62 Pro",
+    "series": "V Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "V Serisi İş Telefonları",
+    "badge": "Kablosuz BT Ahize",
+    "shortDescription": "Kablosuz Bluetooth ahizesi, 2.8 inç renkli ekranı, 12 SIP hattı, dahili Wi-Fi 6 ve Bluetooth 5.4 özelliğiyle özgür hareket imkanı sunan iş telefonu.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "PoE",
+      "Gigabit",
+      "Renkli LCD",
+      "Antibakteriyel"
+    ],
+    "compareSpecs": {
+      "screen": "2.8\" (320x240) Renkli LCD",
+      "sipLines": "12 SIP Hattı",
+      "dssKeys": "21 DSS Tuşu",
+      "connectivity": "Wi-Fi 6, BT 5.4, Çift Gigabit",
+      "poe": "Dahili PoE",
+      "protection": "Kablosuz BT Ahizeli",
+      "audioVideo": "HD Ses, 6 Yönlü Konferans"
+    },
+    "specs": {
+      "SIP Hat ve DSS": "12 SIP Hattı, 21 DSS Tuşu",
+      "Ahize": "Kablosuz Bluetooth Ahize",
+      "Kablosuz": "Dahili Wi-Fi 6 ve Bluetooth 5.4",
+      "Ağ": "Çift Gigabit PoE"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20241205/1729lr6dx0.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/v%20series%20ip%20phone/20241205/9271.html"
+  },
+  {
+    "id": "fanvil-v62w-v62g",
+    "model": "Fanvil V62W / V62G",
+    "series": "V Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "V Serisi İş Telefonları",
+    "badge": "Wi-Fi 6 / Gigabit",
+    "shortDescription": "2.8 inç renkli ekran, 12 SIP hattı, 21 DSS tuşu, çift Gigabit PoE ve V62W modelinde dahili Wi-Fi 6 & Bluetooth 5.4 desteği.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "PoE",
+      "Gigabit",
+      "Renkli LCD"
+    ],
+    "compareSpecs": {
+      "screen": "2.8\" Renkli Ekran",
+      "sipLines": "12 SIP Hattı",
+      "dssKeys": "21 DSS Tuşu",
+      "connectivity": "Çift Gigabit, Wi-Fi 6 & BT 5.4 (V62W)",
+      "poe": "Dahili PoE",
+      "protection": "Kurumsal Ofis",
+      "audioVideo": "HD Ses, 6 Yönlü Konferans"
+    },
+    "specs": {
+      "SIP Hat ve DSS": "12 SIP Hattı, 21 DSS Tuşu",
+      "Ekran": "2.8 inç (320x240) Renkli Ekran",
+      "Varyantlar": "V62W (Wi-Fi 6 + BT 5.4) ve V62G (Gigabit PoE)",
+      "Ağ": "Çift Gigabit Port, PoE"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20240813/1134h8tv2v.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/v%20series%20ip%20phone/20240813/9016.html"
+  },
+  {
+    "id": "fanvil-v61w-v61g",
+    "model": "Fanvil V61W / V61G",
+    "series": "V Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "V Serisi İş Telefonları",
+    "badge": "4 SIP & Renkli Ekran",
+    "shortDescription": "2.4 inç renkli ekran, 4 SIP hattı, 12 DSS tuşu, Gigabit PoE (V61G) ve çift bant Wi-Fi 6 + Bluetooth 5.4 (V61W) seçenekli iş telefonu.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "PoE",
+      "Gigabit",
+      "Renkli LCD"
+    ],
+    "compareSpecs": {
+      "screen": "2.4\" Renkli Ekran",
+      "sipLines": "4 SIP Hattı",
+      "dssKeys": "12 DSS Tuşu",
+      "connectivity": "Gigabit PoE, Wi-Fi 6 & BT 5.4 (V61W)",
+      "poe": "Dahili PoE",
+      "protection": "Kurumsal Ofis",
+      "audioVideo": "HD Ses, 6 Yönlü Konferans"
+    },
+    "specs": {
+      "SIP Hat ve DSS": "4 SIP Hattı, 12 Programlanabilir DSS",
+      "Ekran": "2.4 inç Renkli LCD",
+      "Varyantlar": "V61W (Wi-Fi 6 + BT) ve V61G (Gigabit PoE)",
+      "Ses": "HD Ses, Opus"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20240813/11002l6d28.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/v%20series%20ip%20phone/20240813/9014.html"
+  },
+  {
+    "id": "fanvil-v60-v50",
+    "model": "Fanvil V60 (P/W/G) & V50 (P/G)",
+    "series": "V Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "V Serisi Giriş Seviyesi IP Telefonlar",
+    "badge": "Yeni Giriş Seviyesi",
+    "shortDescription": "2.4 inç renkli ekranlı V60 (PoE/Wi-Fi/Gigabit) ve 2.3 inç nokta vuruşlu ekranlı V50 (PoE/Gigabit) yeni nesil fiyat/performans V serisi telefonlar.",
+    "highlights": [
+      "Wi-Fi",
+      "PoE",
+      "Gigabit",
+      "Renkli LCD",
+      "Kompakt"
+    ],
+    "compareSpecs": {
+      "screen": "2.4\" Renkli (V60) / 2.3\" LCD (V50)",
+      "sipLines": "4 SIP (V60) / 2 SIP (V50)",
+      "dssKeys": "Hızlı Arama Tuşları",
+      "connectivity": "PoE (P), Wi-Fi (W), Gigabit (G)",
+      "poe": "Dahili PoE",
+      "protection": "Masa / Duvar Montaj",
+      "audioVideo": "HD Ses, 6 Yönlü Konferans"
+    },
+    "specs": {
+      "V60 Serisi": "4 SIP Hattı, 2.4 inç Renkli Ekran (V60P, V60W, V60G)",
+      "V50 Serisi": "2 SIP Hattı, 2.3 inç Arkadan Aydınlatmalı Ekran (V50P, V50G)",
+      "Ağ": "PoE, Gigabit ve Çift Bant Wi-Fi Seçenekleri"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20241231/1202l28p6p.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/v%20series%20ip%20phone/20241231/9349.html"
+  },
+  {
+    "id": "fanvil-a330i",
+    "model": "Fanvil A330 / A330i Konsol IP Telefon",
+    "series": "A Serisi Konsol",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "A Serisi Android Dokunmatik Konsol Telefonlar",
+    "badge": "Yeni Nesil Konsol",
+    "shortDescription": "Büyük dokunmatik ekranı, Android işletim sistemi, kazboynu anons mikrofonu (A330i) ve çoklu kamera izleme yeteneğiyle yeni nesil yönetim konsolu.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "PoE",
+      "Gigabit",
+      "Dokunmatik Android",
+      "Kameralı"
+    ],
+    "compareSpecs": {
+      "screen": "Dokunmatik Android IPS Ekran",
+      "sipLines": "20 SIP Hattı",
+      "dssKeys": "112+ Sanal DSS",
+      "connectivity": "2.4G/5G Wi-Fi, BT, Çift Gigabit",
+      "poe": "Dahili PoE",
+      "protection": "Kazboynu Mikrofonlu Konsol",
+      "audioVideo": "HD Video İzleme & Bölgesel Anons"
+    },
+    "specs": {
+      "Model Seçenekleri": "A330 (Dokunmatik Konsol) ve A330i (Kazboynu Mikrofonlu Anons Konsolu)",
+      "SIP ve DSS": "20 SIP Hattı, 100+ Programlanabilir DSS",
+      "Fonksiyon": "Merkezi Anons, İnterkom Kapı Açma ve Kamera İzleme"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20260331/14012v62jb.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/a%20se/20260331/10302.html"
+  },
+  {
+    "id": "fanvil-a320i",
+    "model": "Fanvil A320 / A320i Android Konsol",
+    "series": "A Serisi Konsol",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "A Serisi Android Dokunmatik Konsol Telefonlar",
+    "badge": "10.1\" + 8MP Kamera",
+    "shortDescription": "10.1 inç dokunmatik ekran, dahili 8MP ayarlanabilir kamera, Android OS ve kazboynu mikrofon (A320i) ile üst düzey kontrol ve hemşire/güvenlik konsolu.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "PoE",
+      "Gigabit",
+      "Dokunmatik Android",
+      "Kameralı"
+    ],
+    "compareSpecs": {
+      "screen": "10.1\" (1280x800) IPS Dokunmatik",
+      "sipLines": "20 SIP Hattı",
+      "dssKeys": "120 DSS Tuşu",
+      "connectivity": "2.4G/5G Wi-Fi, BT 5.0, Çift Gigabit",
+      "poe": "Dahili PoE",
+      "protection": "8MP Kamera + Kazboynu Mikrofon",
+      "audioVideo": "1080p Görüntülü Görüşme ve Anons"
+    },
+    "specs": {
+      "Ekran ve Kamera": "10.1 inç Dokunmatik Ekran, Dahili 8MP Gizlilik Kapaklı Kamera",
+      "Mikrofon": "A320i Modelinde Yönlü Kazboynu Anons Mikrofonu",
+      "SIP Hattı": "20 SIP Hattı, 120 DSS Tuşu"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20231025/1339n0p6dt.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/a%20se/20231025/8620.html"
+  },
+  {
+    "id": "fanvil-a32i",
+    "model": "Fanvil A32i Android Anons Konsolu",
+    "series": "A Serisi Konsol",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "A Serisi Android Dokunmatik Konsol Telefonlar",
+    "badge": "Anons & Hemşire Konsolu",
+    "shortDescription": "10.1 inç dokunmatik ekran, Android işletim sistemi, kazboynu mikrofon, dahili Paging/Anons ve kamera izleme merkezi sunan yönetim konsolu.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "PoE",
+      "Gigabit",
+      "Dokunmatik Android"
+    ],
+    "compareSpecs": {
+      "screen": "10.1\" (1280x800) Dokunmatik Android",
+      "sipLines": "20 SIP Hattı",
+      "dssKeys": "112 DSS Tuşu",
+      "connectivity": "2.4G/5G Wi-Fi, BT 5.0, Çift Gigabit",
+      "poe": "Dahili PoE",
+      "protection": "Kazboynu Mikrofonlu Anons Konsolu",
+      "audioVideo": "1080p Kamera İzleme, Dahili Anons Yönetimi"
+    },
+    "specs": {
+      "Ekran ve OS": "10.1 inç Kapasitif Dokunmatik Ekran, Android 9.0",
+      "Anons Mikrofonu": "Çıkarılabilir Yönlü Kazboynu (Gooseneck) Mikrofon",
+      "SIP ve DSS": "20 SIP Hattı, 112 DSS Tuşu, 20 Anons Bölgesi"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20231025/1356z00v0r.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/a%20se/20231025/8622.html"
+  },
+  {
+    "id": "fanvil-a308i",
+    "model": "Fanvil A308i / A308 Android Konsol",
+    "series": "A Serisi Konsol",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "A Serisi Android Dokunmatik Konsol Telefonlar",
+    "badge": "7\" Kompakt Konsol",
+    "shortDescription": "7 inç dokunmatik ekranlı, Android 9.0 tabanlı, kazboynu mikrofonlu (A308i) kompakt anons, güvenlik ve hemşire çağrı yönetim konsolu.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "PoE",
+      "Gigabit",
+      "Dokunmatik Android"
+    ],
+    "compareSpecs": {
+      "screen": "7\" (1024x600) IPS Dokunmatik",
+      "sipLines": "20 SIP Hattı",
+      "dssKeys": "112 DSS Tuşu",
+      "connectivity": "2.4G/5G Wi-Fi, BT 5.0, Çift Gigabit",
+      "poe": "Dahili PoE",
+      "protection": "Kazboynu Mikrofon (A308i)",
+      "audioVideo": "H.264 Video İzleme, Multicast Paging"
+    },
+    "specs": {
+      "Ekran": "7 inç Renkli Dokunmatik Ekran, Android 9.0",
+      "SIP ve DSS": "20 SIP Hattı, 112 DSS Tuşu",
+      "Kullanım": "Okul, Hastane, Fabrika ve Güvenlik Danışma Noktaları"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20240611/14072v4pxt.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/a%20se/20240611/8857.html"
+  },
+  {
+    "id": "fanvil-x210",
+    "model": "Fanvil X210 & X210i Konsol IP Telefon",
+    "series": "X/XU Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "X Serisi Konsol & Yönetici Telefonları",
+    "badge": "3 Ekranlı Konsol",
+    "shortDescription": "3 adet renkli ekranı, toplam 106 DSS/BLF tuşu ve X210i modelinde kazboynu anons mikrofonuyla yoğun çağrı trafiğini yöneten konsol IP telefon.",
+    "highlights": [
+      "Bluetooth",
+      "PoE",
+      "Gigabit",
+      "Renkli LCD"
+    ],
+    "compareSpecs": {
+      "screen": "4.3\" Ana + 2x 3.5\" Yan Renkli DSS Ekran",
+      "sipLines": "20 SIP Hattı",
+      "dssKeys": "106 DSS Tuşu (32 Fiziksel)",
+      "connectivity": "Çift Gigabit, Dahili BT, Wi-Fi Dongle",
+      "poe": "Dahili PoE",
+      "protection": "Yönetici / Anons Konsolu (X210i)",
+      "audioVideo": "H.264 Video İzleme, Harman Hoparlör"
+    },
+    "specs": {
+      "Ekran Yapısı": "4.3 inç Ana Renkli Ekran + 2x 3.5 inç Yan DSS Renkli Ekran",
+      "SIP ve DSS": "20 SIP Hattı, 106 Toplam DSS Tuşu",
+      "Varyant": "X210 (Yönetici/Sekreterya) ve X210i (Kazboynu Mikrofonlu Anons)"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20210628/1127hv2046.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/x/20210921/5040.html"
+  },
+  {
+    "id": "fanvil-x7a",
+    "model": "Fanvil X7A (Kameralı / Standart)",
+    "series": "X/XU Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "X Serisi Dokunmatik Android Telefonlar",
+    "badge": "7\" Android",
+    "shortDescription": "7 inç kapasitif dokunmatik ekran, 20 SIP hattı, 112 DSS tuşu, dahili Wi-Fi/Bluetooth ve opsiyonel USB kameralı Android kurumsal IP telefon.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "PoE",
+      "Gigabit",
+      "Dokunmatik Android",
+      "Kameralı"
+    ],
+    "compareSpecs": {
+      "screen": "7\" (1024x600) Dokunmatik Android",
+      "sipLines": "20 SIP Hattı",
+      "dssKeys": "112 DSS Tuşu",
+      "connectivity": "2.4G/5G Wi-Fi, BT, Çift Gigabit",
+      "poe": "Dahili PoE",
+      "protection": "Yönetici Masaüstü",
+      "audioVideo": "CM60 HD USB Kamera Desteği, Opus"
+    },
+    "specs": {
+      "Ekran": "7 inç Renkli Dokunmatik Ekran, Android 9.0",
+      "SIP ve DSS": "20 SIP Hattı, 112 Sanal DSS Tuşu",
+      "Kablosuz": "Dahili Çift Bant Wi-Fi ve Bluetooth"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20210623/1647tb08tx.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/x/20210921/5044.html"
+  },
+  {
+    "id": "fanvil-x6u",
+    "model": "Fanvil X6U",
+    "series": "X/XU Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "XU Serisi Çift/Üç Ekranlı IP Telefonlar",
+    "badge": "3 Renkli Ekran",
+    "shortDescription": "4.3 inç ana renkli ekran ve 2 adet 2.4 inç yan renkli DSS ekranı, 20 SIP hattı, 60 DSS tuşu, dahili Bluetooth ve Harman hoparlörlü üst düzey telefon.",
+    "highlights": [
+      "Bluetooth",
+      "PoE",
+      "Gigabit",
+      "Renkli LCD"
+    ],
+    "compareSpecs": {
+      "screen": "4.3\" Ana + 2x 2.4\" Yan Renkli Ekran",
+      "sipLines": "20 SIP Hattı",
+      "dssKeys": "60 DSS/BLF Tuşu",
+      "connectivity": "Çift Gigabit, Dahili BT",
+      "poe": "Dahili PoE",
+      "protection": "Üst Düzey Kurumsal",
+      "audioVideo": "Harman Hoparlör, H.264 Video Alımı"
+    },
+    "specs": {
+      "Ekran": "4.3 inç Ana Ekran + 2 Adet 2.4 inç Yan Renkli DSS Ekranı",
+      "SIP ve DSS": "20 SIP Hattı, 60 DSS Tuşu",
+      "Ses": "Harman Kardon Hoparlör, HD Ses"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20210629/1500rx2r62.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/xu/20210921/5049.html"
+  },
+  {
+    "id": "fanvil-x5u",
+    "model": "Fanvil X5U & X5U-R (Kırmızı Acil)",
+    "series": "X/XU Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "XU Serisi Çift Ekranlı IP Telefonlar",
+    "badge": "Çift Ekran + BT",
+    "shortDescription": "3.5 inç ana renkli ekran + 2.4 inç yan DSS ekranı, 16 SIP hattı, 30 DSS tuşu, dahili Bluetooth, Harman hoparlör ve X5U-R kırmızı acil durum modeli.",
+    "highlights": [
+      "Bluetooth",
+      "PoE",
+      "Gigabit",
+      "Renkli LCD"
+    ],
+    "compareSpecs": {
+      "screen": "3.5\" Ana + 2.4\" Yan Renkli Ekran",
+      "sipLines": "16 SIP Hattı",
+      "dssKeys": "30 DSS/BLF Tuşu",
+      "connectivity": "Çift Gigabit, Dahili BT",
+      "poe": "Dahili PoE",
+      "protection": "Siyah (X5U) ve Kırmızı Acil (X5U-R)",
+      "audioVideo": "Harman Hoparlör, Opus HD Ses"
+    },
+    "specs": {
+      "Ekran": "3.5 inç Renkli Ana Ekran + 2.4 inç Renkli Yan DSS Ekranı",
+      "SIP ve DSS": "16 SIP Hattı, 30 DSS Tuşu",
+      "Özel Model": "X5U-R Kırmızı Acil Durum / İtfaiye / Güvenlik Hattı Modeli"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20210629/1552j80h2r.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/xu/20210921/5048.html"
+  },
+  {
+    "id": "fanvil-x4u-x3u",
+    "model": "Fanvil X4U & X3U Pro",
+    "series": "X/XU Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "XU Serisi Kurumsal IP Telefonlar",
+    "badge": "Çift Gigabit",
+    "shortDescription": "2.8 inç renkli ana ekran + 2.4 inç yan DSS ekranlı 12 hatlı X4U ve 6 SIP hatlı renkli ekranlı X3U Pro kurumsal Gigabit IP telefonlar.",
+    "highlights": [
+      "PoE",
+      "Gigabit",
+      "Renkli LCD"
+    ],
+    "compareSpecs": {
+      "screen": "2.8\" Ana + 2.4\" Yan Ekran (X4U)",
+      "sipLines": "12 SIP (X4U) / 6 SIP (X3U Pro)",
+      "dssKeys": "30 DSS Tuşu (X4U)",
+      "connectivity": "Çift Gigabit Port",
+      "poe": "Dahili PoE",
+      "protection": "Kurumsal Ofis",
+      "audioVideo": "Harman Hoparlör, HD Ses"
+    },
+    "specs": {
+      "X4U Özellikleri": "12 SIP Hattı, Çift Renkli Ekran, 30 DSS Tuşu, Çift Gigabit PoE",
+      "X3U Pro Özellikleri": "6 SIP Hattı, 2.8 inç Renkli Ekran, 3 Hat Tuşu, Çift Gigabit"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20210629/1747vp8064.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/xu/20210921/5046.html"
+  },
+  {
+    "id": "fanvil-x306-x305",
+    "model": "Fanvil X306 & X305 Büyük Tuşlu IP Telefon",
+    "series": "X/XU Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "X Serisi Özel Amaçlı & Sağlık Telefonları",
+    "badge": "Büyük Tuş & SOS",
+    "shortDescription": "Yaşlı bakım merkezleri, hastaneler ve kolay kullanım gerektiren alanlar için büyük rakam tuşlu, fotoğraflı hızlı arama ve 433MHz kablosuz SOS buton destekli IP telefon.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "PoE",
+      "Gigabit",
+      "Renkli LCD"
+    ],
+    "compareSpecs": {
+      "screen": "3.5\" Renkli Ekran",
+      "sipLines": "4 SIP Hattı",
+      "dssKeys": "Büyük Hızlı Arama & SOS Tuşları",
+      "connectivity": "2.4G/5G Wi-Fi, BT, Çift Gigabit, 433MHz",
+      "poe": "Dahili PoE",
+      "protection": "İşitme Cihazı (HAC) Uyumlu",
+      "audioVideo": "Yüksek Desibel HD Ses"
+    },
+    "specs": {
+      "Özel Tasarım": "Büyük Braille Noktalı Tuşlar, Fotoğraflı Hızlı Arama",
+      "Kablosuz SOS": "433MHz Kablosuz Acil Çağrı Bilekliği/Butonu Eşleştirme",
+      "Bağlantı": "Çift Bant Wi-Fi, Bluetooth, Çift Gigabit PoE"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20231122/1452l80v0z.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/x/20231122/8663.html"
+  },
+  {
+    "id": "fanvil-x2p-x1s",
+    "model": "Fanvil X2P Çağrı Merkezi & X3SG / X1SG",
+    "series": "X/XU Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "Çağrı Merkezi & Giriş Seviyesi IP Telefonlar",
+    "badge": "Çağrı Merkezi",
+    "shortDescription": "Kulaklık odaklı kompakt çağrı merkezi telefonu X2P (ayak pedalı destekli) ve giriş seviyesi X3SG / X1SG / X1SP kurumsal masa telefonları.",
+    "highlights": [
+      "PoE",
+      "Gigabit",
+      "Renkli LCD",
+      "Kompakt"
+    ],
+    "compareSpecs": {
+      "screen": "2.8\" Renkli (X2P/X3SG) / Matris (X1SG)",
+      "sipLines": "2-4 SIP Hattı",
+      "dssKeys": "Çağrı Merkezi Kulaklık Tuşları",
+      "connectivity": "PoE, Gigabit (X3SG/X1SG), RJ9/EHS",
+      "poe": "Dahili PoE",
+      "protection": "Yoğun Çağrı Merkezi Kullanımı",
+      "audioVideo": "Gürültü Engellemeli HD Ses"
+    },
+    "specs": {
+      "X2P Çağrı Merkezi": "Çift RJ9 Kulaklık Portu (Süpervizör Dinleme), Ayak Pedalı ile Çağrı Cevaplama",
+      "X3SG / X1SG": "Gigabit Ethernet, PoE, HD Ses, Kompakt Masaüstü Tasarım"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20260825/17060t8h6p.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/x/20210921/5038.html"
+  },
+  {
+    "id": "fanvil-x303p",
+    "model": "Fanvil X303 / X303P / X303W / X303G",
+    "series": "X300 Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "X300 Serisi Fiyat/Performans IP Telefon",
+    "badge": "Fiyat / Performans Lideri",
+    "shortDescription": "4 SIP hattı, 2.4 inç renkli ekranı ve PoE (X303P), Çift Bant Wi-Fi (X303W), Gigabit (X303G) seçenekleriyle kurumsal projelerin en çok tercih edilen IP telefonu.",
+    "highlights": [
+      "Wi-Fi",
+      "PoE",
+      "Gigabit",
+      "Renkli LCD",
+      "Kompakt"
+    ],
+    "compareSpecs": {
+      "screen": "2.4\" (320x240) Renkli LCD",
+      "sipLines": "4 SIP Hattı",
+      "dssKeys": "12 Programlanabilir DSS",
+      "connectivity": "PoE (P), 2.4G/5G Wi-Fi (W), Gigabit (G)",
+      "poe": "Dahili PoE",
+      "protection": "Masa / Duvar Tipi",
+      "audioVideo": "HD Ses (G.722 & Opus), 6 Yönlü Konferans"
+    },
+    "specs": {
+      "SIP Hat ve DSS": "4 SIP Hattı, 12 Programlanabilir DSS Tuşu",
+      "Ekran": "2.4 inç (320x240) Renkli LCD Ekran",
+      "Ses": "HD Ses (G.722 ve Opus), 6 Yönlü Sesli Konferans",
+      "Varyantlar": "X303P (PoE), X303W (Wi-Fi), X303G (Gigabit)"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20221115/1611n88600.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/x300/20221115/8231.html"
+  },
+  {
+    "id": "fanvil-x301p",
+    "model": "Fanvil X301 / X301P / X301W / X301G",
+    "series": "X300 Serisi",
+    "category": "Kurumsal SIP Telefonlar",
+    "subcategory": "X300 Serisi Giriş Seviyesi IP Telefon",
+    "badge": "Ekonomik Kurumsal",
+    "shortDescription": "2 SIP hattı, 2.3 inç arkadan aydınlatmalı ekranı ve PoE (X301P), Wi-Fi (X301W), Gigabit (X301G) seçenekleriyle yüksek adetli projeler için ekonomik IP telefon.",
+    "highlights": [
+      "Wi-Fi",
+      "PoE",
+      "Gigabit",
+      "Kompakt"
+    ],
+    "compareSpecs": {
+      "screen": "2.3\" (132x64) Grafik LCD",
+      "sipLines": "2 SIP Hattı",
+      "dssKeys": "Fonksiyon Tuşları",
+      "connectivity": "PoE (P), Çift Bant Wi-Fi (W), Gigabit (G)",
+      "poe": "Dahili PoE",
+      "protection": "Masa / Duvar Tipi",
+      "audioVideo": "HD Ses (Opus/G.722), 6 Yönlü Konferans"
+    },
+    "specs": {
+      "SIP Hattı": "2 SIP Hattı",
+      "Ekran": "2.3 inç Nokta Vuruşlu Arkadan Aydınlatmalı LCD",
+      "Varyantlar": "X301P (PoE), X301W (2.4G/5G Wi-Fi), X301G (Gigabit PoE)"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20240523/1031x8p2x4.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/x300/20221115/8236.html"
+  },
+  {
+    "id": "fanvil-h603w-h602w",
+    "model": "Fanvil H603W / H602W / H601W Yeni Nesil Otel Serisi",
+    "series": "H Serisi",
+    "category": "Otel & 2-Wire Çözümleri",
+    "subcategory": "H600 Serisi Yeni Nesil Otel IP Telefonları",
+    "badge": "Yeni H600 Otel Serisi",
+    "shortDescription": "Lüks oteller için tasarlanmış, kablosuz Bluetooth ahizeli (H603W), renkli ekranlı, çift bant Wi-Fi 6 ve Type-C/USB hızlı şarj çıkışlı yeni nesil otel telefonları.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "PoE",
+      "Renkli LCD",
+      "Antibakteriyel"
+    ],
+    "compareSpecs": {
+      "screen": "Renkli Ekran (H603W) / Şık Otel Paneli",
+      "sipLines": "2 SIP Hattı",
+      "dssKeys": "6 Hızlı Servis Tuşu",
+      "connectivity": "Wi-Fi 6 (W Modeller), PoE",
+      "poe": "Dahili PoE",
+      "protection": "Antibakteriyel & Suya Dayanıklı",
+      "audioVideo": "HD Ses, Kablosuz Ahize (H603W)"
+    },
+    "specs": {
+      "Modeller": "H603W (Renkli Ekran + Kablosuz Ahize), H602W/H602, H601W/H601",
+      "Özellikler": "6 Adet Programlanabilir Otel Servis Tuşu, USB/Type-C Misafir Şarj Portu",
+      "Kablosuz": "Dahili 2.4G/5G Wi-Fi ile Kablosuz Oda Kurulumu"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20241112/100822djhz.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/h%20xiliejiudianhuaji/20241112/9211.html"
+  },
+  {
+    "id": "fanvil-h6w-h5w",
+    "model": "Fanvil H6W & H5W Renkli Ekranlı Otel Telefonu",
+    "series": "H Serisi",
+    "category": "Otel & 2-Wire Çözümleri",
+    "subcategory": "H Serisi Otel IP Telefonları",
+    "badge": "3.5\" Renkli Otel",
+    "shortDescription": "3.5 inç renkli ekranında otel logosu, oda servisi bilgileri ve kapı kamerası gösterebilen, dahili çift bant Wi-Fi ve USB şarj portlu lüks otel IP telefonu.",
+    "highlights": [
+      "Wi-Fi",
+      "PoE",
+      "Renkli LCD"
+    ],
+    "compareSpecs": {
+      "screen": "3.5\" (480x320) Renkli Ekran",
+      "sipLines": "2 SIP Hattı",
+      "dssKeys": "5-6 Programlanabilir Otel Tuşu",
+      "connectivity": "2.4G/5G Wi-Fi, PoE",
+      "poe": "Dahili PoE",
+      "protection": "Otel Odası Masaüstü",
+      "audioVideo": "HD Ses, H.264 Kapı Kamerası Görüntüleme"
+    },
+    "specs": {
+      "Ekran": "3.5 inç Renkli LCD (Otel Tanıtım Görseli Gösterimi)",
+      "Wi-Fi": "Dahili 2.4G/5G Wi-Fi",
+      "Şarj": "1 Adet USB Şarj Portu"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20241218/11212p8t20.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/h%20xiliejiudianhuaji/20240808/8990.html"
+  },
+  {
+    "id": "fanvil-h4w-h3w-h1",
+    "model": "Fanvil H4W / H4 / H3W / H1 Otel Telefonları",
+    "series": "H Serisi",
+    "category": "Otel & 2-Wire Çözümleri",
+    "subcategory": "H Serisi Otel IP Telefonları",
+    "badge": "Otel Standart",
+    "shortDescription": "Otel odaları için özelleştirilebilir ön yüzeyli (faceplate), 6 hızlı arama tuşlu, USB şarj portlu, PoE ve Wi-Fi (H4W/H3W) seçenekli otel telefonları.",
+    "highlights": [
+      "Wi-Fi",
+      "PoE",
+      "Kompakt"
+    ],
+    "compareSpecs": {
+      "screen": "Özel Otel Logolu Faceplate",
+      "sipLines": "2 SIP Hattı",
+      "dssKeys": "6 Hızlı Arama Tuşu",
+      "connectivity": "PoE, 2.4G/5G Wi-Fi (H4W/H3W)",
+      "poe": "Dahili PoE",
+      "protection": "Otel Odası",
+      "audioVideo": "HD Ses, İşitme Cihazı Uyumlu"
+    },
+    "specs": {
+      "Modeller": "H4W (Wi-Fi), H4 (PoE), H3W (Wi-Fi), H1 (Ekonomik 8 Hızlı Tuşlu)",
+      "Özellik": "Resepsiyon, Kat Hizmetleri, Restoran Tek Tuş Arama"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20240808/1145jj20tl.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/h%20xiliejiudianhuaji/20240808/8992.html"
+  },
+  {
+    "id": "fanvil-h2u",
+    "model": "Fanvil H2U Kompakt Duvar / Banyo IP Telefonu",
+    "series": "H Serisi",
+    "category": "Otel & 2-Wire Çözümleri",
+    "subcategory": "H Serisi Otel IP Telefonları",
+    "badge": "Banyo & Duvar Tipi",
+    "shortDescription": "Otel banyoları, koridorlar, asansör holleri ve hastane odaları için kompakt duvar/masa tipi, 10 hızlı arama tuşlu ve PoE destekli mini IP telefon.",
+    "highlights": [
+      "PoE",
+      "Kompakt"
+    ],
+    "compareSpecs": {
+      "screen": "Kompakt Ahizeli Gövde",
+      "sipLines": "2 SIP Hattı",
+      "dssKeys": "10 Hızlı Arama Tuşu",
+      "connectivity": "10/100Mbps Ethernet, PoE",
+      "poe": "Dahili PoE",
+      "protection": "Duvar & Masa Montaj (Siyah/Beyaz)",
+      "audioVideo": "HD Ses, Eller Serbest Hoparlör"
+    },
+    "specs": {
+      "Tasarım": "Kompakt Duvar ve Masaüstü Kullanım, Siyah ve Beyaz Renk",
+      "SIP ve Tuşlar": "2 SIP Hattı, 10 Programlanabilir Hızlı Arama Tuşu, 1 DSS Tuşu"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20220518/1513n642vl.png",
+    "officialUrl": "https://www.fanvil.com/products/p1/h%20xiliejiudianhuaji/20210921/5056.html"
+  },
+  {
+    "id": "fanvil-pn24-pn8",
+    "model": "Fanvil PN24 & PN8 (2-Wire PoE Switch) + PN1",
+    "series": "2-Wire Serisi",
+    "category": "Otel & 2-Wire Çözümleri",
+    "subcategory": "2-Wire (2 Telli) PoE Switch & Dönüştürücü",
+    "badge": "Kablo Değiştirmeden IP",
+    "shortDescription": "Eski 2 telli analog telefon kablolarını değiştirmeden 300 metreye kadar hem ağ hem güç (PoE) taşıyan 24 portlu (PN24) ve 8 portlu (PN8) 2-Wire switchler.",
+    "highlights": [
+      "2-Wire",
+      "PoE"
+    ],
+    "compareSpecs": {
+      "screen": "Tak-Çalıştır Rackmount / Masaüstü",
+      "sipLines": "24 Port (PN24) / 8 Port (PN8)",
+      "dssKeys": "Dahili Güç Paylaşımı",
+      "connectivity": "RJ11 / 2-Wire + RJ45 Uplink",
+      "poe": "2-Wire PoE Besleme (300m)",
+      "protection": "Endüstriyel Metal Kasa",
+      "audioVideo": "100Mbps Veri + PoE Güç İletimi"
+    },
+    "specs": {
+      "Switch Modelleri": "PN24 (24 Port RJ11 2-Wire Switch) ve PN8 (8 Port 2-Wire Switch)",
+      "PN1 Dönüştürücü": "Standart IP Cihazları 2-Telli Hatta Bağlayan Tekli Adaptör",
+      "Mesafe": "300 Metreye Kadar Eski Kablo Üzerinden Güç ve Network"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20240613/1647h8860x.png",
+    "officialUrl": "https://www.fanvil.com/products/2/2-wir/20240613/8882.html"
+  },
+  {
+    "id": "fanvil-2wire-phones",
+    "model": "Fanvil X303-2Wire & H1-2Wire / H2U-2Wire",
+    "series": "2-Wire Serisi",
+    "category": "Otel & 2-Wire Çözümleri",
+    "subcategory": "2-Wire (2 Telli) IP Telefonlar",
+    "badge": "RJ11 2-Telli IP Telefon",
+    "shortDescription": "Doğrudan RJ11 (2 telli) telefon prizine takılarak hem gücünü hem IP ağ bağlantısını eski telefon kablosundan alan 2-Wire masa ve otel IP telefonları.",
+    "highlights": [
+      "2-Wire",
+      "PoE",
+      "Renkli LCD",
+      "Kompakt"
+    ],
+    "compareSpecs": {
+      "screen": "2.4\" Renkli (X303-2W) / Otel Tipi (H1-2W)",
+      "sipLines": "2-4 SIP Hattı",
+      "dssKeys": "8-12 Hızlı Arama Tuşu",
+      "connectivity": "Doğrudan RJ11 2-Wire Girişi",
+      "poe": "PN24/PN8 Switch Üzerinden 2-Wire PoE",
+      "protection": "Sıfır Tadilat Renovasyon",
+      "audioVideo": "HD Ses, 6 Yönlü Konferans"
+    },
+    "specs": {
+      "Modeller": "X303-2Wire (Renkli Ekran Ofis), H1-2Wire (Otel Odası), H2U-2Wire (Banyo/Duvar)",
+      "Kurulum": "Adaptörsüz ve Cat6 Çekmeden Doğrudan Eski Telefon Prizine Tak-Çalıştır"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20240613/1651f0plbv.png",
+    "officialUrl": "https://www.fanvil.com/products/2/2-wi/20240613/8883.html"
+  },
+  {
+    "id": "linkvil-w626w",
+    "model": "LINKVIL W626W Yeni Nesil Endüstriyel Wi-Fi Telefon",
+    "series": "LINKVIL",
+    "category": "LINKVIL Kablosuz UC",
+    "subcategory": "Taşınabilir Wi-Fi IP Telefonlar",
+    "badge": "Yeni Nesil IP67",
+    "shortDescription": "Zorlu saha, fabrika, hastane ve otel ortamları için IP67 su/toz koruması, düşme dayanımı, Wi-Fi 6 hızlı roaming ve uzun pil ömrü sunan yeni nesil kablosuz IP telefon.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "IP65/IP66/IP67",
+      "Renkli LCD",
+      "Antibakteriyel"
+    ],
+    "compareSpecs": {
+      "screen": "2.4\" IPS Renkli Ekran",
+      "sipLines": "4 SIP Hattı",
+      "dssKeys": "PTT (Bas-Konuş) & Acil SOS Tuşu",
+      "connectivity": "Çift Bant Wi-Fi 6 (802.11k/v/r), BT 5.0",
+      "poe": "Masaüstü Şarj Dock",
+      "protection": "IP67 Su/Toz & 1.8m Düşme Dayanımı",
+      "audioVideo": "AI Gürültü Engellemeli HD Ses"
+    },
+    "specs": {
+      "Dayanıklılık": "IP67 Su ve Toz Koruması, 1.8m Düşme Dayanımı",
+      "Kablosuz": "Çift Bant Wi-Fi 6, Kesintisiz 802.11k/v/r Roaming, Bluetooth 5.0",
+      "Batarya": "Uzun Konuşma ve Bekleme Süresi, Hızlı Şarj"
+    },
+    "imageUrl": "https://www.fanvil.com/linkvilresource/Uploads/product/20260625/6a3cd88cb0f65.png",
+    "officialUrl": "https://www.fanvil.com/linkvil/info/id/209.html"
+  },
+  {
+    "id": "linkvil-w611w",
+    "model": "LINKVIL W611W Taşınabilir Endüstriyel Wi-Fi Telefon",
+    "series": "LINKVIL",
+    "category": "LINKVIL Kablosuz UC",
+    "subcategory": "Taşınabilir Wi-Fi IP Telefonlar",
+    "badge": "IP67 Dayanıklı",
+    "shortDescription": "IP67 su, toz ve 1.8 metre düşme dayanıklılığına sahip, depo, fabrika, otel ve hastaneler için tasarlanmış endüstriyel taşınabilir Wi-Fi 6 telefon.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "IP65/IP66/IP67",
+      "Renkli LCD"
+    ],
+    "compareSpecs": {
+      "screen": "2.4\" (240x320) Renkli Ekran",
+      "sipLines": "4 SIP Hattı",
+      "dssKeys": "PTT Tuşu + 16 DSS",
+      "connectivity": "Wi-Fi 6, 802.11k/v/r Roaming, BT 5.0",
+      "poe": "Type-C Şarj İstasyonu (9 Saat Konuşma)",
+      "protection": "IP67 Su/Toz & 1.8m Düşme",
+      "audioVideo": "HD Ses, Mesafe Sensörü"
+    },
+    "specs": {
+      "Dayanıklılık": "IP67 Sertifikalı Su/Toz Geçirmez Gövde",
+      "Kablosuz": "Çift Bant 2.4G/5G Wi-Fi 6, Bluetooth 5.0",
+      "Batarya": "1900mAh Batarya, 9 Saat Konuşma, 200 Saat Bekleme"
+    },
+    "imageUrl": "https://www.fanvil.com/linkvilresource/Uploads/product/20220815/62f9dea7a5744.png",
+    "officialUrl": "https://www.fanvil.com/linkvil/info/id/119.html"
+  },
+  {
+    "id": "linkvil-w620w-w610w",
+    "model": "LINKVIL W620W & W610W Taşınabilir Wi-Fi Telefonlar",
+    "series": "LINKVIL",
+    "category": "LINKVIL Kablosuz UC",
+    "subcategory": "Taşınabilir Wi-Fi IP Telefonlar",
+    "badge": "Ofis & Mağaza Mobilite",
+    "shortDescription": "13 saat konuşma süreli 3000mAh bataryalı W620W (2.4\" ekran) ve kompakt W610W (2.0\" ekran) kurumsal ofis, otel ve perakende Wi-Fi IP telefonları.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "Renkli LCD",
+      "Kompakt"
+    ],
+    "compareSpecs": {
+      "screen": "2.4\" (W620W) / 2.0\" (W610W) Renkli",
+      "sipLines": "4 SIP Hattı",
+      "dssKeys": "PTT (Bas-Konuş) + 16 DSS",
+      "connectivity": "Çift Bant Wi-Fi 6, BT 5.0",
+      "poe": "Şarj Dock (13 Saat Konuşma W620W)",
+      "protection": "1.8m Düşme Dayanımı",
+      "audioVideo": "Çift Mikrofon ENC Gürültü Engelleme"
+    },
+    "specs": {
+      "W620W": "2.4 inç Ekran, Wi-Fi 6, 3000mAh Batarya (13 Saat Konuşma)",
+      "W610W": "2.0 inç Ekran, Çift Bant Wi-Fi, 1900mAh Batarya (9 Saat Konuşma)"
+    },
+    "imageUrl": "https://www.fanvil.com/linkvilresource/Uploads/product/20231114/65532e0cb83fe.png",
+    "officialUrl": "https://www.fanvil.com/linkvil/info/id/198.html"
+  },
+  {
+    "id": "linkvil-w710p-w620p-dect",
+    "model": "LINKVIL W710P / W620P DECT & W620H Multi-Cell Sistem",
+    "series": "LINKVIL",
+    "category": "LINKVIL Kablosuz UC",
+    "subcategory": "DECT & Multi-Cell Kablosuz Sistemler",
+    "badge": "DECT & Multi-Cell",
+    "shortDescription": "W710D IP DECT Baz İstasyonu, W620D/W610D DECT el üniteleri ve büyük kampüsler/fabrikalar için kesintisiz dolaşım sunan W620H/W710H Multi-Cell DECT sistemi.",
+    "highlights": [
+      "Bluetooth",
+      "PoE",
+      "Renkli LCD",
+      "Kompakt"
+    ],
+    "compareSpecs": {
+      "screen": "2.4\" (W620D) / 2.0\" (W610D) Renkli",
+      "sipLines": "20 SIP Hesabı, 10 Ahize / Multi-Cell",
+      "dssKeys": "16 DSS + PTT",
+      "connectivity": "DECT 1.8GHz (300m Menzil), BT 5.0",
+      "poe": "Baz Ünitede Dahili PoE",
+      "protection": "1.8m Düşme Korumalı Ahize",
+      "audioVideo": "10-20 Eşzamanlı HD Sesli Çağrı"
+    },
+    "specs": {
+      "DECT Paketleri": "W710P (W710D Baz + W610D Ahize) ve W620P (W710D Baz + W620D Ahize)",
+      "Multi-Cell": "W620H ve W710H ile Çoklu Baz İstasyonu Üzerinden Kesintisiz Handover"
+    },
+    "imageUrl": "https://www.fanvil.com/linkvilresource/Uploads/product/20240930/66fa4a579c0c5.png",
+    "officialUrl": "https://www.fanvil.com/linkvil/info/id/191.html"
+  },
+  {
+    "id": "linkvil-ca400-ca200",
+    "model": "LINKVIL CA400 & CA200 Kablosuz Konferans Sistemleri",
+    "series": "LINKVIL",
+    "category": "LINKVIL Kablosuz UC",
+    "subcategory": "Kablosuz Konferans & Speakerphone",
+    "badge": "4K All-in-One Konferans",
+    "shortDescription": "Toplantı odaları için 4K kablosuz ekran paylaşım podu (CP20), 4K/FHD AI kamera ve 8 mikrofonlu hoparlörü birleştiren hepsi-bir-arada konferans kitleri.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "Kameralı"
+    ],
+    "compareSpecs": {
+      "screen": "4K Kablosuz Ekran Paylaşımı (BYOD)",
+      "sipLines": "Teams, Zoom, Google Meet, SIP",
+      "dssKeys": "Tek Tuşla Kablosuz Sunum Podu",
+      "connectivity": "USB-C, Wi-Fi, HDMI, Bluetooth",
+      "poe": "Tek Kablo Güç & Veri",
+      "protection": "Toplantı Odası Kurumsal Tasarım",
+      "audioVideo": "4K AI Kamera + 8 MEMS Mikrofonlu Ses"
+    },
+    "specs": {
+      "CA400": "MS10 Speakerphone + CM70 4K Kamera + 2x RC10 Kablosuz Ekran Podu",
+      "CA200 & CP20": "Orta ve Küçük Toplantı Odaları İçin Kablosuz BYOD Sunum ve Konferans Kiti"
+    },
+    "imageUrl": "https://www.fanvil.com/linkvilresource/Uploads/product/20240228/65ded7b2026e0.png",
+    "officialUrl": "https://www.fanvil.com/linkvil/info/id/190.html"
+  },
+  {
+    "id": "linkvil-cs40-cs20-db20h",
+    "model": "LINKVIL CS40 / CS20 Speakerphone & DB20-H",
+    "series": "LINKVIL",
+    "category": "LINKVIL Kablosuz UC",
+    "subcategory": "Kablosuz Konferans & Speakerphone",
+    "badge": "Bluetooth Speakerphone",
+    "shortDescription": "Taşınabilir USB/Bluetooth 5.4 konferans hoparlörleri (CS40 / CS20) ve akıllı telefonları masaüstü iş telefonuna dönüştüren DB20-H telefon istasyonu.",
+    "highlights": [
+      "Bluetooth",
+      "Kompakt"
+    ],
+    "compareSpecs": {
+      "screen": "Dokunmatik LED Kontrol",
+      "sipLines": "USB-A/C & Bluetooth 5.4 UC",
+      "dssKeys": "Çağrı Cevapla / Sessize Al",
+      "connectivity": "USB-C, Bluetooth 5.4",
+      "poe": "Dahili 16 Saat Batarya",
+      "protection": "Taşınabilir Toplantı Hoparlörü",
+      "audioVideo": "360° Ses Alma, ENC Gürültü Engelleme"
+    },
+    "specs": {
+      "CS40 & CS20": "3 Mikrofon Dizisi, 3m 360° Ses Alma, 16 Saat Pil Ömrü",
+      "DB20-H": "Kablosuz Şarj + Bluetooth Ahize + Hoparlör Hepsi-Bir-Arada İstasyon"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20261015/1824drd0p4.png",
+    "officialUrl": "https://www.fanvil.com/linkvil/info/id/193.html"
+  },
+  {
+    "id": "linkvil-w712-a710",
+    "model": "LINKVIL W712 RoIP Telsiz Gateway & A710 3CX SBC",
+    "series": "LINKVIL",
+    "category": "LINKVIL Kablosuz UC",
+    "subcategory": "RoIP Gateway & 3CX SBC",
+    "badge": "Telsiz + IP Köprüsü",
+    "shortDescription": "Analog/DMR el telsizlerini SIP santralle birleştiren W712 RoIP Gateway ve bulut 3CX santral kurulumları için özel geliştirilen A710 3CX Router/SBC.",
+    "highlights": [
+      "PoE",
+      "Gigabit",
+      "Kompakt"
+    ],
+    "compareSpecs": {
+      "screen": "Web & FDMS Yönetim",
+      "sipLines": "SIP Trunk & 3CX SBC",
+      "dssKeys": "Telsiz PTT - SIP Köprüleme",
+      "connectivity": "UHF 400-470MHz (W712) / Gigabit (A710)",
+      "poe": "Dahili PoE",
+      "protection": "Endüstriyel Saha & Bulut Santral",
+      "audioVideo": "Telsiz - IP Telefon Çift Yönlü HD Ses"
+    },
+    "specs": {
+      "W712 RoIP": "Motorola, Hytera, Kenwood Analog/DMR II Telsizleri IP Santrale Bağlar",
+      "A710 3CX SBC": "Bulut 3CX Kurulumları İçin Tak-Çalıştır Session Border Controller"
+    },
+    "imageUrl": "https://www.fanvil.com/linkvilresource/Uploads/product/20230417/643d00b970fef.png",
+    "officialUrl": "https://www.fanvil.com/linkvil/info/id/188.html"
+  },
+  {
+    "id": "fanvil-dh602d-headsets",
+    "model": "Fanvil DH602D / DH301D Pro / DH301B / DH401B / HT301 Kulaklıklar",
+    "series": "Kulaklık & UC",
+    "category": "LINKVIL Kablosuz UC",
+    "subcategory": "DECT, Bluetooth & USB/RJ9 Kurumsal Kulaklıklar",
+    "badge": "DECT & BT Kulaklık",
+    "shortDescription": "150 metre menzilli DECT & Bluetooth hibrit kablosuz kulaklıklar (DH602D, DH301D Pro), Bluetooth (DH301B/DH401B) ve kablolu USB/RJ9 çağrı merkezi kulaklıkları (HT301/HT302).",
+    "highlights": [
+      "Bluetooth",
+      "Kompakt"
+    ],
+    "compareSpecs": {
+      "screen": "Şarj Baz İstasyonu",
+      "sipLines": "IP Telefon + PC + Mobil Eşzamanlı",
+      "dssKeys": "Çağrı Kontrol & Mute",
+      "connectivity": "DECT (150m), Bluetooth 5.3, USB, RJ9",
+      "poe": "Manyetik Şarj Dock",
+      "protection": "ENC Çift Mikrofon Gürültü Engelleme",
+      "audioVideo": "HD Geniş Bant Ses"
+    },
+    "specs": {
+      "Kablosuz DECT/BT": "DH602D (Hibrit DECT+BT), DH301D Pro / DH301D (DECT), DH301B & DH401B (Bluetooth)",
+      "Kablolu": "HT301-U / HT302-U (USB) ve HT301 / HT302 (RJ9 IP Telefon Kulaklığı)"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20260819/11070t6jr0.png",
+    "officialUrl": "https://www.fanvil.com/products/headset/20260624/10606.html"
+  },
+  {
+    "id": "fanvil-i68-i67-i66",
+    "model": "Fanvil i68 / i67 / i66 Yüz Tanımalı Kapı İnterkomları",
+    "series": "i6 Kapı İnterkom",
+    "category": "SIP Güvenlik, İnterkom & Sağlık",
+    "subcategory": "i6 Serisi Yüz Tanımalı Dokunmatik Kapı İnterkomları",
+    "badge": "Canlı Yüz Tanıma",
+    "shortDescription": "7 inç dokunmatik ekran, sahtecilik önlemeli (anti-spoofing) canlı yüz tanıma, QR kod, BLE, RFID kart ve PIN ile geçiş sunan amiral gemisi kapı interkomları.",
+    "highlights": [
+      "PoE",
+      "Dokunmatik Android",
+      "IP65/IP66/IP67",
+      "IK10",
+      "Kameralı"
+    ],
+    "compareSpecs": {
+      "screen": "7\" (1024x600) IPS Dokunmatik",
+      "sipLines": "2 SIP Hattı",
+      "dssKeys": "Dokunmatik Rehber & Daire Arama",
+      "connectivity": "PoE, Wiegand, RS485, BLE, RFID/IC",
+      "poe": "Dahili PoE",
+      "protection": "IP66 Su/Toz & IK07 Darbe",
+      "audioVideo": "2MP Çift Kamera (Canlı Yüz Tanıma), ONVIF"
+    },
+    "specs": {
+      "Modeller": "i68 (Yeni Nesil Yüz Tanıma), i67 ve i66 Dokunmatik Yüz Tanımalı İnterkomlar",
+      "Yüz Kapasitesi": "10.000 Yüz, 10.000 RFID Kart, QR Kod ve Bluetooth Geçiş",
+      "Dayanıklılık": "IP66 ve IK07 Alüminyum Alaşım Gövde"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20250121/11138l448f.png",
+    "officialUrl": "https://www.fanvil.com/products/p5/i6%20series%20high-end%20video%20door%20phone/20250121/9427.html"
+  },
+  {
+    "id": "fanvil-i64",
+    "model": "Fanvil i64 Tuş Takımlı Görüntülü Kapı İnterkomu",
+    "series": "i6 Kapı İnterkom",
+    "category": "SIP Güvenlik, İnterkom & Sağlık",
+    "subcategory": "i6 Serisi Görüntülü Kapı İnterkomları",
+    "badge": "IP66 & IK07 Şifreli",
+    "shortDescription": "Tam sayısal şifre tuş takımı, alüminyum alaşımlı dış ortam tasarımı, 2MP geniş açılı gece görüşlü kamerası ve RFID kart okuyuculu akıllı SIP kapı telefonu.",
+    "highlights": [
+      "PoE",
+      "IP65/IP66/IP67",
+      "IK10",
+      "Kameralı"
+    ],
+    "compareSpecs": {
+      "screen": "Arkadan Aydınlatmalı Tam Tuş Takımı",
+      "sipLines": "2 SIP Hattı",
+      "dssKeys": "Sayısal Tuş Takımı + Hızlı Çağrı",
+      "connectivity": "PoE RJ45, Wiegand, RS485, Röle",
+      "poe": "Dahili PoE",
+      "protection": "IP66 Su/Toz & IK07 Darbe (-40°C~70°C)",
+      "audioVideo": "2MP 1080p HDR Gece Görüşlü Kamera, ONVIF"
+    },
+    "specs": {
+      "Kamera": "2MP 1080p Full HD Geniş Açılı Gece Görüşlü Kamera (ONVIF)",
+      "Geçiş Kontrol": "Şifre Tuş Takımı, RFID/IC Kart, İç İstasyon, Uzaktan DTMF ve BLE"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20240605/11564jnr64.png",
+    "officialUrl": "https://www.fanvil.com/products/p5/i6%20series%20high-end%20video%20door%20phone/20220402/7321.html"
+  },
+  {
+    "id": "fanvil-i63-i62-i61-i60",
+    "model": "Fanvil i63 / i62 / i61 & i60 / i60K Kapı İnterkomları",
+    "series": "i6 Kapı İnterkom",
+    "category": "SIP Güvenlik, İnterkom & Sağlık",
+    "subcategory": "i6 Serisi Görüntülü Kapı İnterkomları",
+    "badge": "Villa & Plaza Giriş",
+    "shortDescription": "5 tuşlu (i63), tek tuşlu (i61/i62) alüminyum alaşım modeller ve kompakt IP65 korumalı i60 / i60K (şifreli) görüntülü kapı telefonları.",
+    "highlights": [
+      "PoE",
+      "IP65/IP66/IP67",
+      "IK10",
+      "Kameralı",
+      "Kompakt"
+    ],
+    "compareSpecs": {
+      "screen": "1-5 Fiziksel Çağrı Tuşu / Tuş Takımı (i60K)",
+      "sipLines": "2 SIP Hattı",
+      "dssKeys": "1-5 Hızlı Arama / Şifre (i60K)",
+      "connectivity": "PoE, RFID Kart, BLE, Wiegand",
+      "poe": "Dahili PoE",
+      "protection": "IP66 & IK07 (i61-i63) / IP65 (i60)",
+      "audioVideo": "2MP HDR Kamera, ONVIF, Çift Yönlü HD Ses"
+    },
+    "specs": {
+      "Modeller": "i63 (5 Butonlu), i62 & i61 (Tek Butonlu), i60K (Kompakt Tuş Takımlı), i60 (Kompakt Tek Tuş)",
+      "Dayanıklılık": "IP66/IP65 Su ve Toz Koruması, Gece Görüşlü Kamera"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20220402/1629z6r28l.png",
+    "officialUrl": "https://www.fanvil.com/products/p5/i6%20series%20high-end%20video%20door%20phone/20220402/7319.html"
+  },
+  {
+    "id": "fanvil-i566w-i556w-i507w",
+    "model": "Fanvil i566W / i556W / i507W / i506W (10.1\" İç İstasyonlar)",
+    "series": "i500 İç İstasyon",
+    "category": "SIP Güvenlik, İnterkom & Sağlık",
+    "subcategory": "i500 Serisi 10.1 inç Dokunmatik İç Ortam Panelleri",
+    "badge": "10.1\" Akıllı Panel",
+    "shortDescription": "10.1 inç geniş IPS dokunmatik ekranlı, Android veya Linux tabanlı, dahili çift bant Wi-Fi ve 8 alarm girişli akıllı daire/ofis içi interkom panelleri.",
+    "highlights": [
+      "Wi-Fi",
+      "Bluetooth",
+      "PoE",
+      "Dokunmatik Android"
+    ],
+    "compareSpecs": {
+      "screen": "10.1\" (1280x800) IPS Dokunmatik",
+      "sipLines": "2 SIP Hattı",
+      "dssKeys": "Dokunmatik Kapı Açma & CCTV İzleme",
+      "connectivity": "2.4G/5G Wi-Fi, BT 5.0, PoE, 8 Alarm Girişi",
+      "poe": "Dahili PoE",
+      "protection": "Duvar & Masaüstü Montaj",
+      "audioVideo": "1080p Kapı/Kamera İzleme, HD Ses"
+    },
+    "specs": {
+      "Modeller": "i566W & i507W (Android 10.1\"), i556W & i506W (Linux 10.1\")",
+      "Fonksiyon": "Kapı İnterkomu Görüntüleme, Tek Tuşla Kapı Açma, 8 Alarm Sensör Girişi"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20260930/1711bjj6h2.png",
+    "officialUrl": "https://www.fanvil.com/products/p5/sipshineiji/20260930/11003.html"
+  },
+  {
+    "id": "fanvil-i564w-i505w-i504w",
+    "model": "Fanvil i564W / i554W / i505W / i504W / i503W / i501W (7\" & 4.3\" İç İstasyon)",
+    "series": "i500 İç İstasyon",
+    "category": "SIP Güvenlik, İnterkom & Sağlık",
+    "subcategory": "i500 Serisi 7 inç & Kompakt İç Ortam Panelleri",
+    "badge": "7\" Daire İçi Panel",
+    "shortDescription": "Rezidanslar, villalar ve ofisler için 7 inç dokunmatik ekranlı (i564W, i554W, i505W, i504W, i57A, i55A) ve kompakt (i503W, i501W) SIP iç ortam panelleri.",
+    "highlights": [
+      "Wi-Fi",
+      "PoE",
+      "Dokunmatik Android",
+      "Renkli LCD"
+    ],
+    "compareSpecs": {
+      "screen": "7\" (1024x600) IPS Dokunmatik",
+      "sipLines": "2 SIP Hattı",
+      "dssKeys": "Dokunmatik & Fiziksel Kapı Açma",
+      "connectivity": "PoE, Çift Bant Wi-Fi (W Modeller), Alarm Portu",
+      "poe": "Dahili PoE",
+      "protection": "İnce Duvar Montaj",
+      "audioVideo": "HD Görüntülü Kapı İzleme ve Konuşma"
+    },
+    "specs": {
+      "7 inç Modeller": "i564W, i554/i554W, i505/i505W (Android), i504/i504W (Linux), i57A, i55A",
+      "Kompakt Modeller": "i503W ve i501/i501W Ekonomik Daire İçi İstasyonlar"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20240423/162928j446.png",
+    "officialUrl": "https://www.fanvil.com/products/p5/sipshineiji/20240423/8768.html"
+  },
+  {
+    "id": "fanvil-y501-healthcare",
+    "model": "Fanvil Y501 & Y501-Y Serisi Hemşire Çağrı + A320i Konsol",
+    "series": "Sağlık / Konsol",
+    "category": "SIP Güvenlik, İnterkom & Sağlık",
+    "subcategory": "Sağlık & Hemşire Çağrı SIP İnterkom Sistemleri",
+    "badge": "Hastane Hemşire Çağrı",
+    "shortDescription": "Hastaneler ve yaşlı bakım merkezleri için yatak başı/banyo acil çekme kordonlu, antibakteriyel ve IP54 korumalı Y501 / Y501-Y hemşire çağrı üniteleri.",
+    "highlights": [
+      "Wi-Fi",
+      "PoE",
+      "IP65/IP66/IP67",
+      "Antibakteriyel",
+      "Kompakt"
+    ],
+    "compareSpecs": {
+      "screen": "Renkli İkaz LED + Antibakteriyel Tuşlar",
+      "sipLines": "2 SIP Hattı",
+      "dssKeys": "Hemşire Çağrı, İptal ve Çekme Kordonu",
+      "connectivity": "PoE, Çift Bant Wi-Fi (W), 433MHz Kablosuz Buton",
+      "poe": "Dahili PoE",
+      "protection": "IP54 Su/Toz & TÜV Antibakteriyel",
+      "audioVideo": "Eller Serbest Çift Yönlü HD Ses"
+    },
+    "specs": {
+      "Modeller": "Y501 / Y501W (Sıva Üstü), Y501-Y / Y501W-Y (86 Kutu Sıva Altı), A320i Hemşire Konsolu",
+      "Hijyen": "Çıkarılabilir ve Yıkanabilir Antibakteriyel Silikon Tuşlar, IP54 Koruma"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20230928/0950464282.png",
+    "officialUrl": "https://www.fanvil.com/products/p5/sip%20duijiang2/20230928/8574.html"
+  },
+  {
+    "id": "fanvil-a12v-a11v-i16sv",
+    "model": "Fanvil A12V / A11V / i16SV / i16SV-02P Endüstriyel SOS İnterkomlar",
+    "series": "SIP İnterkom",
+    "category": "SIP Güvenlik, İnterkom & Sağlık",
+    "subcategory": "Dış Ortam Acil Durum (SOS) & Endüstriyel İnterkomlar",
+    "badge": "IP66 & IK10 Vandalizm",
+    "shortDescription": "Otoyol, tünel, otopark, maden ve kampüsler için paslanmaz çelik / alüminyum gövdeli, IP65/IP66 ve IK10 darbe dayanımlı sesli ve kameralı SOS acil çağrı interkomları.",
+    "highlights": [
+      "PoE",
+      "IP65/IP66/IP67",
+      "IK10",
+      "Kameralı"
+    ],
+    "compareSpecs": {
+      "screen": "Paslanmaz Çelik Tek/Çift SOS Butonu",
+      "sipLines": "2 SIP Hattı",
+      "dssKeys": "Acil SOS Çağrı Tuşu",
+      "connectivity": "PoE, Röle Giriş/Çıkış, Aktif Hoparlör Çıkışı",
+      "poe": "Dahili PoE",
+      "protection": "IP65/IP66 Su & IK10 Vandalizm (-40°C~70°C)",
+      "audioVideo": "2MP HD Kamera (V Modeller), 3W-10W Güçlü Hoparlör"
+    },
+    "specs": {
+      "Modeller": "A12V/A12 (Paslanmaz Çelik), A11V/A11, i16S/i16SV (Tek Buton), i16S-02P/i16SV-02P (Çift Buton)",
+      "Dayanıklılık": "IP65/IP66 Su Geçirmezlik ve IK10 Darbe Koruması"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20241211/094368dd40.png",
+    "officialUrl": "https://www.fanvil.com/products/p5/sip%20duijiang2/20241211/9306.html"
+  },
+  {
+    "id": "fanvil-i10sv-a10-h501",
+    "model": "Fanvil i10SV / i10S / i10D & A10 / H501 Mini SIP İnterkomlar",
+    "series": "SIP İnterkom",
+    "category": "SIP Güvenlik, İnterkom & Sağlık",
+    "subcategory": "İç Ortam Mini SIP İnterkomlar",
+    "badge": "Kompakt Mini İnterkom",
+    "shortDescription": "Asansörler, gişeler, otopark bariyerleri, temiz odalar ve otel kapı önleri için kompakt tasarımlı sesli ve görüntülü mini SIP interkom ailesi.",
+    "highlights": [
+      "Wi-Fi",
+      "PoE",
+      "Kameralı",
+      "Kompakt"
+    ],
+    "compareSpecs": {
+      "screen": "Tek veya Çift Çağrı Butonu",
+      "sipLines": "2 SIP Hattı",
+      "dssKeys": "1-2 Çağrı Tuşu",
+      "connectivity": "PoE, Wi-Fi (A10W/H501W), Röle Çıkışı",
+      "poe": "Dahili PoE",
+      "protection": "IP54 İç Ortam / Yarı Açık Alan",
+      "audioVideo": "HD Kamera (i10SV/A10V), Çift Yönlü HD Ses"
+    },
+    "specs": {
+      "Modeller": "i10S/i10SV/i10SD, i10/i10D, A10 Serisi (Siyah/Beyaz, Wi-Fi), H501 Serisi",
+      "Kullanım": "Asansör İçi Acil İletişim, Banka/Hastane Gişesi, Bariyer Noktaları"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20230615/15100bj204.png",
+    "officialUrl": "https://www.fanvil.com/products/p5/sip%20duijiang2/20210921/5027.html"
+  },
+  {
+    "id": "fanvil-a513w-video-speaker",
+    "model": "Fanvil A513W Kameralı Dış Ortam All-in-One SIP Hoparlör",
+    "series": "SIP Hoparlör/PA",
+    "category": "SIP Hoparlör, Paging & Gateway",
+    "subcategory": "SIP Anons Hoparlörleri",
+    "badge": "Yeni Kameralı Hoparlör",
+    "shortDescription": "Yüksek güçlü dış ortam SIP anons hoparlörü, HD güvenlik kamerası ve çift yönlü interkomu tek cihazda birleştiren hepsi-bir-arada akıllı dış ortam hoparlörü.",
+    "highlights": [
+      "Wi-Fi",
+      "PoE",
+      "IP65/IP66/IP67",
+      "Kameralı"
+    ],
+    "compareSpecs": {
+      "screen": "Entegre HD Kamera + Horn Hoparlör",
+      "sipLines": "2 SIP Hattı + Multicast",
+      "dssKeys": "Otomatik Anons & Talkback",
+      "connectivity": "PoE+, Çift Bant Wi-Fi, ONVIF",
+      "poe": "Dahili PoE+",
+      "protection": "IP66 Dış Ortam Su/Toz Koruması",
+      "audioVideo": "HD Kamera İzleme + Yüksek Desibel Anons"
+    },
+    "specs": {
+      "3'ü 1 Arada": "SIP Anons Yayın + HD Kamera Gözetleme + Çift Yönlü Sesli İnterkom",
+      "Kullanım": "Kampüs, Fabrika Sahası, Otopark, Meydan ve Endüstriyel Tesisler"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20260713/1649xfndvz.png",
+    "officialUrl": "https://www.fanvil.com/products/p5/sip%20speaker/20260713/10715.html"
+  },
+  {
+    "id": "fanvil-a233-a212-a201-fhs01",
+    "model": "Fanvil A233 Horn, A212 Duvar & A201 / FH-S01 Tavan SIP Hoparlörler",
+    "series": "SIP Hoparlör/PA",
+    "category": "SIP Hoparlör, Paging & Gateway",
+    "subcategory": "SIP Anons Hoparlörleri",
+    "badge": "Okul & Fabrika Anons",
+    "shortDescription": "IP66 dış ortam Horn (A233), iç ortam duvar tipi (A212) ve tavan tipi (A201, FH-S01) PoE beslemeli SIP Multicast anons ve arka plan müzik hoparlörleri.",
+    "highlights": [
+      "PoE",
+      "IP65/IP66/IP67"
+    ],
+    "compareSpecs": {
+      "screen": "Merkezi IP Santral & A32i Kontrolü",
+      "sipLines": "2 SIP Hattı + 20 Multicast Bölgesi",
+      "dssKeys": "Zamanlı Zil & Acil Tahliye",
+      "connectivity": "PoE / PoE+, Harici Hoparlör Çıkışı",
+      "poe": "Dahili PoE / PoE+ (30W'a Kadar)",
+      "protection": "IP66 Dış Ortam (A233) / Tavan & Duvar",
+      "audioVideo": "MP3, Opus, G.722 HD Anons, Talkback Mikrofon"
+    },
+    "specs": {
+      "Dış Ortam": "Fanvil A233 IP66 Dış Ortam SIP Horn Hoparlör",
+      "İç Ortam": "A212 (Duvar Tipi), A201 & FH-S01 (Tavan Tipi Gömmeli SIP Hoparlör)"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20241126/10326224h2.png",
+    "officialUrl": "https://www.fanvil.com/products/p5/sip%20speaker/20241126/9236.html"
+  },
+  {
+    "id": "fanvil-pa3-pa2s",
+    "model": "Fanvil PA3 & PA2S SIP Paging / Anons Gateway",
+    "series": "SIP Hoparlör/PA",
+    "category": "SIP Hoparlör, Paging & Gateway",
+    "subcategory": "SIP Paging & Ses/Görüntü Ağ Geçitleri",
+    "badge": "Amfi IP Dönüştürücü",
+    "shortDescription": "Mevcut analog anons amfilerini ve hoparlörlerini IP santrale ve SIP Multicast anons sistemine dönüştüren PA3 ve PA2S SIP Paging Gateway modülleri.",
+    "highlights": [
+      "PoE",
+      "Kompakt"
+    ],
+    "compareSpecs": {
+      "screen": "USB/TF Kart MP3 Yayın Desteği (PA3)",
+      "sipLines": "2 SIP Hattı",
+      "dssKeys": "Acil Çağrı Buton & Röle Portları",
+      "connectivity": "PoE, 3.5mm Line In/Out, 10W-30W Amfi Çıkışı",
+      "poe": "Dahili PoE / PoE+",
+      "protection": "Endüstriyel Kompakt Kasa",
+      "audioVideo": "HD Ses, RTSP Kamera Görüntü Bağlama"
+    },
+    "specs": {
+      "PA3": "Line-In/Line-Out, USB/TF Karttan Zamanlı Zil ve Müzik Yayını, Dahili Amfi Çıkışı",
+      "PA2S": "SIP Anons + Acil İnterkom + Kamera Tetikleme Ağ Geçidi"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20210712/1332v00x4d.png",
+    "officialUrl": "https://www.fanvil.com/products/p5/wulianwangwangguan_1/20210921/5036.html"
+  },
+  {
+    "id": "fanvil-ga200-ga100-ga10",
+    "model": "Fanvil GA200 (E1/PRI) & GA100 (FXS/FXO) & GA10 ATA VoIP Gateway",
+    "series": "2-Wire/Gateway",
+    "category": "SIP Hoparlör, Paging & Gateway",
+    "subcategory": "FXS, FXO & Dijital E1/PRI VoIP Gateway",
+    "badge": "FXS / FXO / E1 Gateway",
+    "shortDescription": "Analog telefonları, faks cihazlarını, PSTN hatlarını ve E1/PRI devrelerini IP santrallere bağlayan GA10 ATA, GA100 Serisi FXS/FXO ve GA200 Dijital Gateway ailesi.",
+    "highlights": [
+      "Gigabit",
+      "Kompakt"
+    ],
+    "compareSpecs": {
+      "screen": "Web & FDMS Bulut Yönetim",
+      "sipLines": "1 FXS (GA10) / 4-128 FXS-FXO (GA100) / 1-4 E1 (GA200)",
+      "dssKeys": "Otomatik Provisioning",
+      "connectivity": "RJ11 FXS/FXO, E1/T1 PRI, Gigabit Ethernet",
+      "poe": "AC / USB-C Güç Beslemesi",
+      "protection": "19\" Rackmount & Masaüstü",
+      "audioVideo": "T.38 Faks, G.711/G.722/Opus"
+    },
+    "specs": {
+      "GA10 ATA": "1 FXS Portlu Kompakt Analog Telefon / Faks SIP Adaptörü",
+      "GA100 Serisi": "Çok Portlu Kurumsal FXS (Analog Telefon) ve FXO (Telekom Hattı) Gateway",
+      "GA200 Serisi": "1/2/4 E1/T1 PRI Dijital Trunk VoIP Gateway"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20260814/1102644246.png",
+    "officialUrl": "https://www.fanvil.com/products/medi/fx/20260814/10919.html"
+  },
+  {
+    "id": "fanvil-fdms-fcms-fncs",
+    "model": "Fanvil FDMS / FCMS Bulut Yönetim & FNCS Hemşire Çağrı Yazılımı",
+    "series": "Bulut & Aksesuar",
+    "category": "SIP Hoparlör, Paging & Gateway",
+    "subcategory": "Bulut Yönetim Platformu & Mobil Uygulamalar",
+    "badge": "Zero-Touch Bulut",
+    "shortDescription": "Binlerce Fanvil cihazını tek merkezden kuran FDMS/FCMS bulut sistemi, FNCS hastane hemşire çağrı yönetim yazılımı ve Fanvil Link mobil interkom uygulaması.",
+    "highlights": [
+      "Dokunmatik Android"
+    ],
+    "compareSpecs": {
+      "screen": "Web Dashboard & iOS/Android App",
+      "sipLines": "Sınırsız Cihaz Yönetimi",
+      "dssKeys": "Uzaktan Firmware & Konfigürasyon",
+      "connectivity": "Bulut (Cloud) ve On-Premise Kurulum",
+      "poe": "Yazılım Platformu",
+      "protection": "SSL/TLS Kurumsal Güvenlik",
+      "audioVideo": "Mobil Uygulamadan Görüntülü Kapı Açma"
+    },
+    "specs": {
+      "FDMS & FCMS": "Merkezi Cihaz Yönetimi, Zero-Touch Provisioning, Alarm İzleme",
+      "FNCS": "Fanvil Nurse Call System (Hastane Yatak ve Hemşire Çağrı Ekran Yazılımı)",
+      "Fanvil Link App": "Akıllı Telefondan Kapı İnterkomu ile Görüntülü Konuşma ve Kapı Açma"
+    },
+    "imageUrl": "https://www.fanvil.com/upload/images/20241212/1049h8dr6x.png",
+    "officialUrl": "https://www.fanvil.com/products/fdms/20241212/9315.html"
+  }
+]
