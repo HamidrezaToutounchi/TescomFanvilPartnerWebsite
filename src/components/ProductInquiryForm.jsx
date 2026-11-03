@@ -638,23 +638,6 @@ export default function ProductInquiryForm({
                         &apos;ni okudum ve anladım. *
                       </label>
                     </div>
-
-                    <div className="flex items-start gap-2.5">
-                      <input
-                        id="marketing-consent-check"
-                        type="checkbox"
-                        checked={marketingConsent}
-                        onChange={(e) => setMarketingConsent(e.target.checked)}
-                        className="mt-1 rounded border-slate-300 text-[#E60012] focus:ring-[#E60012]"
-                      />
-                      <label
-                        htmlFor="marketing-consent-check"
-                        className="text-xs text-slate-500 leading-relaxed"
-                      >
-                        Fanvil ürünleri, kampanyalar ve duyurular hakkında e-posta, SMS ve telefon
-                        yoluyla ticari elektronik ileti almayı kabul ediyorum. (İsteğe bağlı)
-                      </label>
-                    </div>
                   </div>
 
                   {/* Cloudflare Turnstile Widget Container (interaction-only) */}
