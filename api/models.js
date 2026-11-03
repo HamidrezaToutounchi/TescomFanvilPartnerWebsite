@@ -22,7 +22,7 @@ const leadNoteSchema = new mongoose.Schema(
 
 const leadMongooseSchema = new mongoose.Schema(
   {
-    refCode: { type: String, required: true, unique: true, index: true },
+    refCode: { type: String, required: true, unique: true },
     requestType: {
       type: String,
       required: true,
@@ -60,7 +60,6 @@ const leadMongooseSchema = new mongoose.Schema(
   }
 );
 
-leadMongooseSchema.index({ refCode: 1 }, { unique: true });
 leadMongooseSchema.index({ createdAt: -1 });
 leadMongooseSchema.index({ email: 1 });
 leadMongooseSchema.index({ status: 1, createdAt: -1 });

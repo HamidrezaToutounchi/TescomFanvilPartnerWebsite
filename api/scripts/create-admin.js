@@ -7,6 +7,7 @@ const bcrypt = require('bcryptjs');
 const { AdminUser } = require('../models');
 
 const usernameArg = (process.argv[2] || '').trim().toLowerCase();
+const passwordArg = process.argv[3] || '';
 
 if (!usernameArg || !/^[a-zA-Z0-9._-]{3,60}$/.test(usernameArg)) {
   console.error(
@@ -22,43 +23,67 @@ if (!MONGO_URI) {
   process.exit(1);
 }
 
-function promptHiddenPassword(promptText) {
+function askTwoHiddenPasswords(firstPrompt, secondPrompt) {
   return new Promise((resolve) => {
+    process.stdin.resume();
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
       terminal: true
     });
 
-    process.stdout.write(promptText);
-
+    let muted = false;
     rl._writeToOutput = function _writeToOutput(stringToWrite) {
-      if (stringToWrite === '\r\n' || stringToWrite === '\n' || stringToWrite === '\r') {
+      if (!muted) {
         rl.output.write(stringToWrite);
+      } else if (
+        stringToWrite === '\r\n' ||
+        stringToWrite === '\n' ||
+        stringToWrite === '\r'
+      ) {
+        rl.output.write('\n');
       }
     };
 
-    rl.question('', (answer) => {
-      rl.close();
-      process.stdout.write('\n');
-      resolve(answer);
+    process.stdout.write(firstPrompt);
+    muted = true;
+
+    rl.question('', (firstAnswer) => {
+      muted = false;
+      process.stdout.write(secondPrompt);
+      muted = true;
+
+      rl.question('', (secondAnswer) => {
+        muted = false;
+        rl.close();
+        resolve([firstAnswer.trim(), secondAnswer.trim()]);
+      });
     });
   });
 }
 
 async function main() {
-  const password = await promptHiddenPassword(
-    `'${usernameArg}' için yeni admin şifresi girin (en az 12 karakter, ekranda görünmez): `
-  );
+  let password = passwordArg;
 
-  if (!password || password.length < 12) {
+  if (!password) {
+    const [first, second] = await askTwoHiddenPasswords(
+      `'${usernameArg}' için yeni admin şifresi girin (en az 12 karakter, ekranda görünmez): `,
+      'Şifreyi tekrar girin: '
+    );
+
+    if (!first || first.length < 12) {
+      console.error('[HATA] Şifre en az 12 karakter uzunluğunda olmalıdır.');
+      process.exit(1);
+    }
+
+    if (first !== second) {
+      console.error('[HATA] Girilen şifreler eşleşmiyor.');
+      process.exit(1);
+    }
+
+    password = first;
+  } else if (password.length < 12) {
     console.error('[HATA] Şifre en az 12 karakter uzunluğunda olmalıdır.');
-    process.exit(1);
-  }
-
-  const confirmPassword = await promptHiddenPassword('Şifreyi tekrar girin: ');
-  if (password !== confirmPassword) {
-    console.error('[HATA] Girilen şifreler eşleşmiyor.');
     process.exit(1);
   }
 
@@ -75,7 +100,9 @@ async function main() {
     existing.failedAttempts = 0;
     existing.lockedUntil = null;
     await existing.save();
-    console.log(`[BAŞARILI] Mevcut '${usernameArg}' kullanıcısının şifresi güncellendi ve kilidi açıldı (rol: admin).`);
+    console.log(
+      `[BAŞARILI] Mevcut '${usernameArg}' kullanıcısının şifresi güncellendi ve kilidi açıldı (rol: admin).`
+    );
   } else {
     await AdminUser.create({
       username: usernameArg,
