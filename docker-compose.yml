@@ -1,0 +1,10 @@
+services:
+  fanvil-partner-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tescom-fanvil-web
+    restart: unless-stopped
+    ports:
+      # Sunucudaki 80, 443, 5000, 5433, 5678, 8000 portlarıyla ÇAKIŞMAMASI için 8090 portu kullanıldı:
+      - "8090:80"
