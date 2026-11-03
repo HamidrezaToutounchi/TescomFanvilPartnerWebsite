@@ -430,6 +430,12 @@ function buildLeadsFilter(query) {
     filter.captchaStatus = String(query.captchaStatus);
   }
 
+  if (query.marketingConsent === 'true') {
+    filter.marketingConsent = true;
+  } else if (query.marketingConsent === 'false') {
+    filter.marketingConsent = { $ne: true };
+  }
+
   if (query.from || query.to) {
     filter.createdAt = {};
     if (query.from) {
@@ -544,6 +550,10 @@ router.get('/leads/export.csv', requireAuth, async (req, res) => {
       'Proje Adı',
       'Mesaj',
       'Sepet Kalemleri',
+      'KVKK Aydınlatma Tarihi',
+      'KVKK Sürümü',
+      'Ticari İleti Onayı',
+      'Ticari İleti Onay Tarihi',
       'IP Adresi'
     ];
 
@@ -563,6 +573,19 @@ router.get('/leads/export.csv', requireAuth, async (req, res) => {
       const dateStr = new Date(l.createdAt).toLocaleString('tr-TR', {
         timeZone: 'Europe/Istanbul'
       });
+      const kvkkAtStr = l.kvkkAcceptedAt
+        ? new Date(l.kvkkAcceptedAt).toLocaleString('tr-TR', {
+            timeZone: 'Europe/Istanbul'
+          })
+        : dateStr;
+      const kvkkVerStr = l.kvkkVersion || l.kvkkTextVersion || 'v1';
+      const marketingStr = l.marketingConsent ? 'Evet' : 'Hayır';
+      const marketingAtStr =
+        l.marketingConsent && l.marketingConsentAt
+          ? new Date(l.marketingConsentAt).toLocaleString('tr-TR', {
+              timeZone: 'Europe/Istanbul'
+            })
+          : '';
       const cartStr = Array.isArray(l.cartSnapshot)
         ? l.cartSnapshot.map((c) => `${c.model} (${c.qty} Adet)`).join(' | ')
         : '';
@@ -582,6 +605,10 @@ router.get('/leads/export.csv', requireAuth, async (req, res) => {
         l.projectName,
         l.message,
         cartStr,
+        kvkkAtStr,
+        kvkkVerStr,
+        marketingStr,
+        marketingAtStr,
         l.ip
       ];
 

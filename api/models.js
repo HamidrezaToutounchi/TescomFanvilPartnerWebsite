@@ -44,7 +44,9 @@ const leadMongooseSchema = new mongoose.Schema(
     },
     kvkkAccepted: { type: Boolean, required: true },
     kvkkAcceptedAt: { type: Date, default: Date.now },
-    kvkkTextVersion: { type: String, default: 'v1', maxlength: 20, trim: true },
+    kvkkVersion: { type: String, default: 'v1', maxlength: 10, trim: true },
+    marketingConsent: { type: Boolean, default: false },
+    marketingConsentAt: { type: Date, default: null },
     status: {
       type: String,
       default: 'new',
@@ -72,6 +74,7 @@ leadMongooseSchema.index({ email: 1 });
 leadMongooseSchema.index({ status: 1, createdAt: -1 });
 leadMongooseSchema.index({ requestType: 1, createdAt: -1 });
 leadMongooseSchema.index({ captchaStatus: 1, createdAt: -1 });
+leadMongooseSchema.index({ marketingConsent: 1, createdAt: -1 });
 leadMongooseSchema.index({ ip: 1, captchaStatus: 1, createdAt: -1 });
 
 // 2. Allowed IPs Collection ("allowed_ips")

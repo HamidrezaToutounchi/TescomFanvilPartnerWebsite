@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import ProductImage from './ProductImage';
 import { FanvilGoldPartnerBadge } from './BrandLogos';
+import { COMPANY, KVKK_CONTENT } from '../content/kvkk';
 
 export function PageBanner({ title, subtitle, badge, onGoHome }) {
   return (
@@ -779,6 +780,148 @@ export function QuoteCartPage({
             </div>
           </div>
         )}
+      </div>
+    </section>
+  );
+}
+
+export function KvkkPage() {
+  const hasMersis = Boolean(COMPANY.mersis && COMPANY.mersis.trim());
+
+  const renderPhoneLinks = () =>
+    COMPANY.phones.map((ph, idx) => (
+      <React.Fragment key={ph.href}>
+        {idx > 0 && <span> – </span>}
+        <a
+          href={ph.href}
+          className="text-[#0F172A] hover:text-[#E60012] underline underline-offset-2 font-medium"
+        >
+          {ph.display}
+        </a>
+      </React.Fragment>
+    ));
+
+  return (
+    <section className="py-12 lg:py-16 bg-[#F8FAFC]">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <article className="bg-white rounded-3xl border border-slate-200/90 shadow-soft p-6 sm:p-10 lg:p-12 text-slate-800 space-y-8">
+          {/* Top Header: Centered Bold Company Title + Document Heading */}
+          <header className="text-center border-b border-slate-200 pb-6 space-y-2.5">
+            <div className="text-xs sm:text-sm font-extrabold tracking-wide text-slate-900 uppercase">
+              {COMPANY.title}
+            </div>
+            <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+              {KVKK_CONTENT.heading}
+            </h1>
+            <p className="text-xs text-slate-500 font-semibold">
+              {KVKK_CONTENT.metaLine}
+            </p>
+          </header>
+
+          {/* Sections 1 - 9 */}
+          <div className="space-y-6 text-xs sm:text-sm leading-relaxed text-slate-700">
+            {KVKK_CONTENT.sections.map((section) => (
+              <div key={section.id} className="space-y-2.5">
+                <h2 className="text-sm sm:text-base font-extrabold text-slate-900">
+                  {section.title}
+                </h2>
+
+                {section.intro && <p>{section.intro}</p>}
+
+                {section.isDataControllerSection && (
+                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-1.5 text-xs sm:text-sm text-slate-800">
+                    <div>
+                      <span className="font-bold text-slate-900">Adres: </span>
+                      <span>{COMPANY.address}</span>
+                    </div>
+                    <div>
+                      <span className="font-bold text-slate-900">Telefon: </span>
+                      {renderPhoneLinks()}
+                    </div>
+                    {hasMersis && (
+                      <div>
+                        <span className="font-bold text-slate-900">MERSİS No: </span>
+                        <span>{COMPANY.mersis}</span>
+                      </div>
+                    )}
+                    <div>
+                      <span className="font-bold text-slate-900">KEP: </span>
+                      <span>{COMPANY.kep}</span>
+                    </div>
+                    <div>
+                      <span className="font-bold text-slate-900">E-posta: </span>
+                      <a
+                        href={`mailto:${COMPANY.email}`}
+                        className="text-[#E60012] hover:underline font-medium"
+                      >
+                        {COMPANY.email}
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {Array.isArray(section.bullets) && (
+                  <ul className="list-disc pl-5 space-y-1.5">
+                    {section.bullets.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                )}
+
+                {Array.isArray(section.customList) && (
+                  <ul className="space-y-1.5 pl-1">
+                    {section.customList.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                )}
+
+                {section.isApplicationMethodSection && (
+                  <ul className="list-disc pl-5 space-y-1.5">
+                    <li>
+                      yukarıdaki adrese ıslak imzalı dilekçe ile şahsen veya noter aracılığıyla,
+                    </li>
+                    <li>
+                      {COMPANY.kep} adresine kayıtlı elektronik posta ile güvenli elektronik imza
+                      veya mobil imza kullanarak,
+                    </li>
+                    <li>
+                      daha önce Tescom&apos;a bildirdiğiniz ve sistemimizde kayıtlı bulunan e-posta
+                      adresinizden{' '}
+                      <a
+                        href={`mailto:${COMPANY.email}`}
+                        className="text-[#E60012] hover:underline font-medium"
+                      >
+                        {COMPANY.email}
+                      </a>{' '}
+                      adresine
+                    </li>
+                  </ul>
+                )}
+
+                {section.outro && <p>{section.outro}</p>}
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom Contact Box: Separated by a thin line, small print */}
+          <footer className="pt-6 border-t border-slate-200 text-xs text-slate-600 space-y-1">
+            <div className="font-extrabold text-slate-900">{COMPANY.title}</div>
+            <div>Adres: {COMPANY.address}</div>
+            <div>Tel: {renderPhoneLinks()}</div>
+            {hasMersis && <div>MERSİS No: {COMPANY.mersis}</div>}
+            <div>KEP: {COMPANY.kep}</div>
+            <div>
+              E-posta:{' '}
+              <a
+                href={`mailto:${COMPANY.email}`}
+                className="text-[#E60012] hover:underline font-medium"
+              >
+                {COMPANY.email}
+              </a>
+            </div>
+          </footer>
+        </article>
       </div>
     </section>
   );

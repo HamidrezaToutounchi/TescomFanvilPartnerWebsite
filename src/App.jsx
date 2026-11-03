@@ -11,7 +11,8 @@ import {
   PageBanner,
   HomeOverviewSection,
   ComparePage,
-  QuoteCartPage
+  QuoteCartPage,
+  KvkkPage
 } from './components/DedicatedPages';
 import Footer from './components/Footer';
 
@@ -59,6 +60,16 @@ export default function App() {
       window.removeEventListener('popstate', syncLocation);
     };
   }, []);
+
+  // Update document.title dynamically for /kvkk vs main pages
+  useEffect(() => {
+    if (currentPage === 'kvkk') {
+      document.title = 'KVKK Aydınlatma Metni | Fanvil Partner Türkiye';
+    } else {
+      document.title =
+        'Fanvil Partner Türkiye | Resmi Gold Partner & Kurumsal A&V-IoT Çözüm Merkezi';
+    }
+  }, [currentPage]);
 
   // Navigate between dedicated pages & scroll to top
   const handleNavigatePage = (pageId) => {
@@ -289,15 +300,10 @@ export default function App() {
             <PageBanner
               badge="6698 Sayılı KVKK"
               title="KVKK Aydınlatma Metni"
+              subtitle="Kişisel verilerinizin işlenmesine, korunmasına ve Kanun'un 11. maddesi kapsamındaki haklarınıza ilişkin bilgilendirme."
               onGoHome={() => handleNavigatePage('home')}
             />
-            <section className="py-14 lg:py-20 bg-[#F8FAFC]">
-              <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="bg-white rounded-3xl border border-slate-200/90 shadow-soft p-6 sm:p-10 text-sm sm:text-base text-slate-800 leading-relaxed">
-                  BURAYA HUKUK BİRİMİNİN ONAYLADIĞI METİN GELECEK
-                </div>
-              </div>
-            </section>
+            <KvkkPage />
           </>
         )}
       </main>

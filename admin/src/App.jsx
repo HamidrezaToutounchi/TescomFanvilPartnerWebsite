@@ -434,6 +434,7 @@ function LeadsListView({ onSelectLead, onUnauthorized }) {
   const [requestType, setRequestType] = useState('');
   const [status, setStatus] = useState('');
   const [captchaStatus, setCaptchaStatus] = useState('');
+  const [marketingConsent, setMarketingConsent] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
 
@@ -445,11 +446,12 @@ function LeadsListView({ onSelectLead, onUnauthorized }) {
       if (requestType) params.set('requestType', requestType);
       if (status) params.set('status', status);
       if (captchaStatus) params.set('captchaStatus', captchaStatus);
+      if (marketingConsent) params.set('marketingConsent', marketingConsent);
       if (from) params.set('from', from);
       if (to) params.set('to', to);
       return params.toString();
     },
-    [page, q, requestType, status, captchaStatus, from, to]
+    [page, q, requestType, status, captchaStatus, marketingConsent, from, to]
   );
 
   const loadLeads = useCallback(
@@ -533,7 +535,7 @@ function LeadsListView({ onSelectLead, onUnauthorized }) {
       {/* Filter Bar */}
       <form
         onSubmit={handleFilterSubmit}
-        className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3"
+        className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-8 gap-3"
       >
         <div className="lg:col-span-2 relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -589,6 +591,20 @@ function LeadsListView({ onSelectLead, onUnauthorized }) {
           <option value="passed">Doğrulandı (passed)</option>
           <option value="unverified">Doğrulanmadı (unverified)</option>
           <option value="disabled">Kapalı (disabled)</option>
+        </select>
+
+        <select
+          value={marketingConsent}
+          onChange={(e) => {
+            setMarketingConsent(e.target.value);
+            setPage(1);
+          }}
+          className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs"
+          title="Ticari İleti Onayı"
+        >
+          <option value="">Ticari İleti Onayı: Tümü</option>
+          <option value="true">Ticari ileti onayı: Evet</option>
+          <option value="false">Ticari ileti onayı: Hayır</option>
         </select>
 
         <input
@@ -995,6 +1011,49 @@ function LeadDetailView({ leadId, isAdmin, onBack }) {
               ) : (
                 <div className="text-xs text-slate-400 italic">Sepet boş</div>
               )}
+            </div>
+
+            {/* KVKK & Ticari İleti Onay Bilgileri */}
+            <div className="pt-4 border-t border-slate-100 space-y-2.5">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                KVKK &amp; Ticari İleti Onay Kayıtları
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
+                  <div className="text-slate-500 text-[11px]">KVKK Aydınlatma Tarihi</div>
+                  <div className="font-bold text-slate-900 mt-0.5">
+                    {lead.kvkkAcceptedAt ? formatDateTR(lead.kvkkAcceptedAt) : formatDateTR(lead.createdAt)}
+                  </div>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
+                  <div className="text-slate-500 text-[11px]">KVKK Metin Sürümü</div>
+                  <div className="font-bold text-slate-900 mt-0.5">
+                    {lead.kvkkVersion || lead.kvkkTextVersion || 'v1'}
+                  </div>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
+                  <div className="text-slate-500 text-[11px]">Ticari İleti Onayı</div>
+                  <div className="mt-0.5">
+                    <span
+                      className={`inline-block px-2 py-0.5 rounded border text-[11px] font-bold ${
+                        lead.marketingConsent
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-slate-100 text-slate-600 border-slate-200'
+                      }`}
+                    >
+                      {lead.marketingConsent ? 'Evet (Onaylandı)' : 'Hayır'}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
+                  <div className="text-slate-500 text-[11px]">Ticari İleti Onay Tarihi</div>
+                  <div className="font-bold text-slate-900 mt-0.5">
+                    {lead.marketingConsent && lead.marketingConsentAt
+                      ? formatDateTR(lead.marketingConsentAt)
+                      : '-'}
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Technical Metadata (IP & User-Agent) */}

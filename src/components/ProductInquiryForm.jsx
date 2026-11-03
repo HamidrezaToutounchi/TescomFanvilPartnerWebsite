@@ -13,6 +13,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { FanvilGoldPartnerBadge } from './BrandLogos';
+import { KVKK_VERSION } from '../content/kvkk';
 
 const REQUEST_TYPES = [
   { id: 'bilgi', label: 'Ürün Hakkında Bilgi & Fiyat Al' },
@@ -55,6 +56,7 @@ export default function ProductInquiryForm({
   const [projectName, setProjectName] = useState('');
   const [message, setMessage] = useState('');
   const [kvkkAccepted, setKvkkAccepted] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
   const [website, setWebsite] = useState(''); // Honeypot field
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -216,6 +218,8 @@ export default function ProductInquiryForm({
       message: message.trim().slice(0, 3000),
       cartSnapshot: sanitizedCartSnapshot,
       kvkkAccepted: Boolean(kvkkAccepted),
+      marketingConsent: Boolean(marketingConsent),
+      kvkkVersion: KVKK_VERSION,
       website,
       ...(turnstileToken ? { turnstileToken } : {})
     };
@@ -404,6 +408,7 @@ export default function ProductInquiryForm({
                         setSubmittedData(null);
                         setSubmitError('');
                         setKvkkAccepted(false);
+                        setMarketingConsent(false);
                       }}
                       className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
                     >
@@ -646,28 +651,46 @@ export default function ProductInquiryForm({
                     </div>
                   </div>
 
-                  {/* KVKK & Submit */}
-                  <div className="flex items-start gap-2.5 pt-1">
-                    <input
-                      id="kvkk-check"
-                      type="checkbox"
-                      checked={kvkkAccepted}
-                      onChange={(e) => setKvkkAccepted(e.target.checked)}
-                      required
-                      className="mt-1 rounded border-slate-300 text-[#E60012] focus:ring-[#E60012]"
-                    />
-                    <label htmlFor="kvkk-check" className="text-xs text-slate-500 leading-relaxed">
-                      6698 sayılı KVKK kapsamında{' '}
-                      <a
-                        href="/kvkk"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#E60012] font-bold underline hover:text-[#B9000E]"
+                  {/* KVKK Aydınlatma Onayı & İsteğe Bağlı Ticari İleti Onayı */}
+                  <div className="space-y-3 pt-1">
+                    <div className="flex items-start gap-2.5">
+                      <input
+                        id="kvkk-check"
+                        type="checkbox"
+                        checked={kvkkAccepted}
+                        onChange={(e) => setKvkkAccepted(e.target.checked)}
+                        required
+                        className="mt-1 rounded border-slate-300 text-[#E60012] focus:ring-[#E60012]"
+                      />
+                      <label htmlFor="kvkk-check" className="text-xs text-slate-600 leading-relaxed">
+                        <a
+                          href="/kvkk"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#E60012] font-bold underline hover:text-[#B9000E]"
+                        >
+                          KVKK Aydınlatma Metni
+                        </a>
+                        &apos;ni okudum ve anladım. *
+                      </label>
+                    </div>
+
+                    <div className="flex items-start gap-2.5">
+                      <input
+                        id="marketing-consent-check"
+                        type="checkbox"
+                        checked={marketingConsent}
+                        onChange={(e) => setMarketingConsent(e.target.checked)}
+                        className="mt-1 rounded border-slate-300 text-[#E60012] focus:ring-[#E60012]"
+                      />
+                      <label
+                        htmlFor="marketing-consent-check"
+                        className="text-xs text-slate-500 leading-relaxed"
                       >
-                        KVKK Aydınlatma Metni
-                      </a>
-                      ’ni okudum; iletişim bilgilerimin ürün bilgilendirmesi, teknik destek ve kurumsal fiyat teklifi sunulması amacıyla işlenmesini kabul ediyorum.
-                    </label>
+                        Fanvil ürünleri, kampanyalar ve duyurular hakkında e-posta, SMS ve telefon
+                        yoluyla ticari elektronik ileti almayı kabul ediyorum. (İsteğe bağlı)
+                      </label>
+                    </div>
                   </div>
 
                   {/* Cloudflare Turnstile Widget Container (interaction-only) */}

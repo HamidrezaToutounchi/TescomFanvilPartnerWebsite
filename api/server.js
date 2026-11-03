@@ -140,6 +140,8 @@ const leadZodSchema = z
     kvkkAccepted: z.literal(true, {
       error: 'KVKK aydınlatma metnini onaylamanız gerekmektedir.'
     }),
+    marketingConsent: z.boolean().optional().default(false),
+    kvkkVersion: z.string().trim().max(10).optional().default('v1'),
     website: z.string().max(200).optional().default(''),
     turnstileToken: z.string().max(2048).optional()
   })
@@ -197,9 +199,9 @@ app.use(
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", 'data:'],
-        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+        fontSrc: ["'self'"],
         connectSrc: ["'self'"],
         frameAncestors: ["'none'"],
         baseUri: ["'self'"],
@@ -427,6 +429,8 @@ app.post('/api/leads', leadsRateLimiter, async (req, res) => {
 
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       const candidateRefCode = generateRefCode();
+      const now = new Date();
+      const hasMarketingConsent = Boolean(validData.marketingConsent);
       try {
         savedLead = await Lead.create({
           refCode: candidateRefCode,
@@ -442,15 +446,17 @@ app.post('/api/leads', leadsRateLimiter, async (req, res) => {
           message: validData.message,
           cartSnapshot: validData.cartSnapshot,
           kvkkAccepted: validData.kvkkAccepted,
-          kvkkAcceptedAt: new Date(),
-          kvkkTextVersion: 'v1',
+          kvkkAcceptedAt: now,
+          kvkkVersion: validData.kvkkVersion || 'v1',
+          marketingConsent: hasMarketingConsent,
+          marketingConsentAt: hasMarketingConsent ? now : null,
           status: 'new',
           captchaStatus,
           isRead: false,
           notes: [],
           ip: clientIp,
           userAgent,
-          createdAt: new Date()
+          createdAt: now
         });
         break;
       } catch (err) {
