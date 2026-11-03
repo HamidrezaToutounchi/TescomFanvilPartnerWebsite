@@ -218,13 +218,13 @@ export default function App() {
           </>
         )}
 
-        {/* 4. GOLD PARTNER & FPRS SAYFASI (GOLD-PARTNER) */}
+        {/* 4. GOLD PARTNER SAYFASI (GOLD-PARTNER) */}
         {currentPage === 'gold-partner' && (
           <>
             <PageBanner
               badge="Fanvil Gold Partner Türkiye"
-              title="Gold Partner Güvencesi & FPRS Proje Kaydı"
-              subtitle="Resmi distribütör garantisi, FPRS ihale/proje koruma ayrıcalıkları, alt bayilik programı ve ücretsiz santral uyumluluk desteği."
+              title="Gold Partner Güvencesi"
+              subtitle="Resmi distribütör garantisi ve ücretsiz santral uyumluluk desteği."
               onGoHome={() => handleNavigatePage('home')}
             />
             <GoldPartnerSection onScrollToForm={handleNavigateToForm} />
@@ -273,13 +273,13 @@ export default function App() {
           </>
         )}
 
-        {/* 7. İLETİŞİM, ÜRÜN BİLGİ & FPRS BAŞVURU SAYFASI (ILETISIM) */}
+        {/* 7. İLETİŞİM & ÜRÜN BİLGİ SAYFASI (ILETISIM) */}
         {currentPage === 'iletisim' && (
           <>
             <PageBanner
               badge="Kurumsal İletişim & Destek"
-              title="Ürün Bilgi, Proje Teklifi & FPRS Kayıt Formu"
-              subtitle="Ürünler hakkında detaylı bilgi alın, proje teklif sepetinizi gönderin veya FPRS proje koruma / alt bayilik başvurusu yapın."
+              title="Ürün Bilgi & Teklif Formu"
+              subtitle="Ürünler hakkında detaylı bilgi alın veya proje teklif sepetinizi gönderin."
               onGoHome={() => handleNavigatePage('home')}
             />
             <ProductInquiryForm

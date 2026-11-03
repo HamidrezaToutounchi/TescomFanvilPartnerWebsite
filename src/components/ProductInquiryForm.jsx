@@ -16,10 +16,7 @@ import { FanvilGoldPartnerBadge } from './BrandLogos';
 import { KVKK_VERSION } from '../content/kvkk';
 
 const REQUEST_TYPES = [
-  { id: 'bilgi', label: 'Ürün Hakkında Bilgi & Fiyat Al' },
-  { id: 'proje', label: 'FPRS Proje Kaydı & Özel İskonto' },
-  { id: 'bayi', label: 'Alt Bayilik / Partner Başvurusu' },
-  { id: 'demo', label: '2-Wire / Teknik Demo Talebi' }
+  { id: 'bilgi', label: 'Ürün Hakkında Bilgi & Fiyat Al' }
 ];
 
 const PBX_OPTIONS = [
@@ -176,7 +173,7 @@ export default function ProductInquiryForm({
   }, [submittedData]);
 
   useEffect(() => {
-    if (activeFormTab) {
+    if (activeFormTab && REQUEST_TYPES.some((r) => r.id === activeFormTab)) {
       setRequestType(activeFormTab);
     }
   }, [activeFormTab]);
@@ -446,32 +443,6 @@ export default function ProductInquiryForm({
                     </div>
                   )}
 
-                  {/* Request Type Selector Tabs */}
-                  <div>
-                    <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-500 mb-2">
-                      1. İşlem / Başvuru Türünü Seçin
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {REQUEST_TYPES.map((tab) => (
-                        <button
-                          key={tab.id}
-                          type="button"
-                          onClick={() => setRequestType(tab.id)}
-                          className={`py-2.5 px-3.5 rounded-xl text-xs font-bold text-left border transition-all flex items-center justify-between ${
-                            requestType === tab.id
-                              ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-sm'
-                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                          }`}
-                        >
-                          <span>{tab.label}</span>
-                          {requestType === tab.id && (
-                            <span className="w-2 h-2 rounded-full bg-[#E60012] shrink-0" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
                   {/* Product Selection Row */}
                   <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 pt-1">
                     <div className="sm:col-span-8">
@@ -620,7 +591,7 @@ export default function ProductInquiryForm({
 
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        Şehir / Proje Adı (FPRS İçin Opsiyonel)
+                        Şehir / Proje Adı (Opsiyonel)
                       </label>
                       <input
                         type="text"
@@ -645,7 +616,7 @@ export default function ProductInquiryForm({
                         maxLength={3000}
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
-                        placeholder="Ürün teknik özellikleri, stok durumu, 2-Wire dönüşüm veya toplu fiyat teklifi hakkındaki sorunuzu buraya yazabilirsiniz..."
+                        placeholder="Ürün teknik özellikleri, stok durumu veya fiyat hakkındaki sorunuzu buraya yazabilirsiniz..."
                         className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-[#E60012]"
                       />
                     </div>
@@ -777,12 +748,6 @@ export default function ProductInquiryForm({
                   <CheckCircle2 className="w-4 h-4 text-[#E60012] shrink-0 mt-0.5" />
                   <span>
                     <strong>30 Dakikada Dönüş:</strong> Ürün uyumluluk, stok ve teknik sorularınıza uzman satış mühendislerimiz hızla yanıt verir.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-[#0284C7] shrink-0 mt-0.5" />
-                  <span>
-                    <strong>Özel Proje Fiyatlandırması (FPRS):</strong> Toplu alımlarınızda ve ihale projelerinizde özel Gold Partner iskontosu uygulanır.
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">

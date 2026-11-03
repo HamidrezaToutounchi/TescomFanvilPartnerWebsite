@@ -1,8 +1,6 @@
 import React from 'react';
 import {
-  ShieldCheck,
   Award,
-  TrendingUp,
   Headphones,
   FileCheck2,
   ArrowRight
@@ -11,12 +9,6 @@ import { FanvilGoldPartnerBadge } from './BrandLogos';
 
 const PARTNER_PILLARS = [
   {
-    icon: ShieldCheck,
-    title: 'FPRS Proje Kayıt & Koruma Sistemi',
-    description:
-      'Kamu, otel, hastane ve kurumsal ihalelerinizde projenizi resmi Fanvil FPRS sistemine kaydederek size özel proje fiyat koruması sağlıyoruz.'
-  },
-  {
     icon: Award,
     title: '%100 Orijinal Gold Partner Garantisi',
     description:
@@ -24,15 +16,9 @@ const PARTNER_PILLARS = [
   },
   {
     icon: Headphones,
-    title: 'Ücretsiz Topoloji, PoC & Santral Testi',
+    title: 'Ücretsiz Topoloji & Santral Uyumluluk Danışmanlığı',
     description:
-      '3CX, PortSIP, Microsoft Teams, Zoom ve Asterisk santrallerinizle kurulum öncesi ücretsiz teknik danışmanlık, demo cihaz ve FDMS bulut yönetimi.'
-  },
-  {
-    icon: TrendingUp,
-    title: 'Alt Bayi & Sistem Entegratörü Özel İskontosu',
-    description:
-      'Telekom operatörleri, zayıf akım firmaları ve bilgi işlem entegratörleri için stoktan hızlı sevk ve yüksek kârlı partner fiyatlandırması.'
+      '3CX, PortSIP, Microsoft Teams, Zoom ve Asterisk santrallerinizle kurulum öncesi ücretsiz teknik danışmanlık ve FDMS bulut yönetimi.'
   }
 ];
 
@@ -58,25 +44,17 @@ export default function GoldPartnerSection({ onScrollToForm }) {
             </h2>
 
             <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-              <strong>fanvilpartner.com</strong> olarak Türkiye genelindeki sistem entegratörlerine, otel/hastane yatırımcılarına ve kurumsal işletmelere doğrudan yetkili Gold Partner statüsüyle donanım tedariği, 2-Wire dönüşüm mühendisliği ve proje koruma avantajı sunuyoruz.
+              <strong>fanvilpartner.com</strong> olarak Türkiye genelindeki sistem entegratörlerine, otel/hastane yatırımcılarına ve kurumsal işletmelere doğrudan yetkili Gold Partner statüsüyle donanım tedariği ve teknik danışmanlık sunuyoruz.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => onScrollToForm('proje')}
+                onClick={() => onScrollToForm('bilgi')}
                 className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-[#E60012] hover:bg-[#B9000E] text-white text-xs sm:text-sm font-bold transition-all"
               >
                 <FileCheck2 className="w-4 h-4" />
-                <span>FPRS Proje Kaydı Oluştur</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onScrollToForm('bayi')}
-                className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-400/30 text-xs sm:text-sm font-bold transition-all"
-              >
-                <span>Alt Bayilik Başvurusu</span>
+                <span>Ürün Bilgi &amp; Teklif Al</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

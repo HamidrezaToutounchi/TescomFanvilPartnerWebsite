@@ -104,26 +104,10 @@ export default function HeroSection({ onNavigatePage, onNavigateToForm, onInquir
                 <FileText className="w-4 h-4" />
                 <span>Ürün Hakkında Bilgi &amp; Teklif Al</span>
               </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigateToForm('bayi')}
-                className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-semibold text-sm transition-all"
-              >
-                <Award className="w-4 h-4 text-amber-600" />
-                <span>Bayi / Partner Ol</span>
-              </button>
             </div>
 
             {/* Key Trust Metrics */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-200/80">
-              <div className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <div>
-                  <div className="text-xs font-bold text-slate-900">FPRS Proje Koruma</div>
-                  <div className="text-[11px] text-slate-500">Özel proje iskontosu &amp; ihale desteği</div>
-                </div>
-              </div>
+            <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-200/80">
               <div className="flex items-start gap-2.5">
                 <ShieldCheck className="w-4 h-4 text-[#E60012] shrink-0 mt-0.5" />
                 <div>
@@ -131,10 +115,10 @@ export default function HeroSection({ onNavigatePage, onNavigateToForm, onInquir
                   <div className="text-[11px] text-slate-500">%100 orijinal distribütör garantisi</div>
                 </div>
               </div>
-              <div className="flex items-start gap-2.5 col-span-2 sm:col-span-1">
+              <div className="flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-[#0284C7] shrink-0 mt-0.5" />
                 <div>
-                  <div className="text-xs font-bold text-slate-900">Ücretsiz Topoloji &amp; Demo</div>
+                  <div className="text-xs font-bold text-slate-900">Ücretsiz Topoloji Danışmanlığı</div>
                   <div className="text-[11px] text-slate-500">Proje öncesi mühendislik danışmanlığı</div>
                 </div>
               </div>

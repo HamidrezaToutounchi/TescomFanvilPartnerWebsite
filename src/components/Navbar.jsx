@@ -151,15 +151,6 @@ export default function Navbar({
             </span>
           </div>
           <div className="flex items-center gap-4 shrink-0 ml-auto">
-            <button
-              type="button"
-              onClick={() => onNavigateToForm('proje')}
-              className="hover:text-amber-300 transition-colors font-medium hidden sm:inline-flex items-center gap-1 whitespace-nowrap"
-            >
-              <Sparkles className="w-3 h-3 text-amber-400" />
-              <span>FPRS Proje Kaydı</span>
-            </button>
-            <span className="hidden sm:inline text-slate-600">|</span>
             <a
               href="tel:+908508501881"
               className="inline-flex items-center gap-1.5 text-white font-semibold hover:text-amber-300 transition-colors whitespace-nowrap"

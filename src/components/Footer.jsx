@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   PhoneCall,
-  MapPin,
   FileText,
   ShoppingBag,
   Layers,
@@ -126,7 +125,7 @@ export default function Footer({
                     onClick={() => onNavigatePage('gold-partner')}
                     className="hover:text-white transition-colors text-left"
                   >
-                    Gold Partner &amp; FPRS
+                    Gold Partner
                   </button>
                 </li>
                 <li>
@@ -167,12 +166,6 @@ export default function Footer({
                 Gold Partner İletişim Merkezi
               </h4>
               <div className="space-y-2.5 text-xs text-slate-400">
-                <div className="flex items-start gap-2.5">
-                  <MapPin className="w-4 h-4 text-[#E60012] shrink-0 mt-0.5" />
-                  <span>
-                    Barbaros Hayrettin Paşa Mah. Şehitler Cad. Gümüş Residence No: 8 Daire: 323 Esenyurt / İSTANBUL
-                  </span>
-                </div>
                 <div className="flex items-center gap-2.5">
                   <PhoneCall className="w-4 h-4 text-[#E60012] shrink-0" />
                   <a

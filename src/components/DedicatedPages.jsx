@@ -320,10 +320,10 @@ export function HomeOverviewSection({
             <div className="space-y-3">
               <FanvilGoldPartnerBadge size="sm" variant="dark" />
               <h3 className="text-xl sm:text-2xl font-extrabold">
-                FPRS Proje Kaydı, Bayilik &amp; Gold Partner Avantajları
+                Gold Partner Avantajları
               </h3>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                İhale ve kurumsal projeleriniz için FPRS proje fiyat koruması, alt bayilik (sistem entegratörü) özel iskontoları ve FDMS bulut yönetim desteğimiz hakkında detaylı bilgi alın.
+                Resmi distribütör garantisi, ücretsiz santral uyumluluk danışmanlığı ve FDMS bulut yönetim desteğimiz hakkında detaylı bilgi alın.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
