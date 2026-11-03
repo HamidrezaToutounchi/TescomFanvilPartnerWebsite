@@ -42,7 +42,10 @@ if (!SESSION_SECRET || SESSION_SECRET.length < 32) {
   process.exit(1);
 }
 
-mongoose.set('sanitizeFilter', true);
+// Note: Do NOT enable mongoose.set('sanitizeFilter', true) globally because it
+// rewrites internal operators like { $in: [...] } and { $lte: Date } into { $eq: ... },
+// causing CastError on ObjectId/Date fields. User input is already sanitized via
+// sanitizeNoSqlKeys() middleware and strict Zod schemas.
 mongoose.set('strictQuery', true);
 
 // ---------------------------------------------------------------------------
