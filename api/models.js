@@ -43,6 +43,8 @@ const leadMongooseSchema = new mongoose.Schema(
       validate: [(arr) => arr.length <= 50, 'En fazla 50 sepet kalemi gönderilebilir.']
     },
     kvkkAccepted: { type: Boolean, required: true },
+    kvkkAcceptedAt: { type: Date, default: Date.now },
+    kvkkTextVersion: { type: String, default: 'v1', maxlength: 20, trim: true },
     status: {
       type: String,
       default: 'new',
@@ -102,6 +104,7 @@ const adminUserSchema = new mongoose.Schema(
     role: { type: String, required: true, enum: ['admin', 'viewer'], default: 'admin' },
     failedAttempts: { type: Number, default: 0 },
     lockedUntil: { type: Date, default: null },
+    passwordChangedAt: { type: Date, default: null },
     createdAt: { type: Date, default: Date.now },
     lastLoginAt: { type: Date, default: null },
     lastLoginIp: { type: String, default: '' }

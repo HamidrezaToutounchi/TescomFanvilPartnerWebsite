@@ -54,7 +54,7 @@ export default function ProductInquiryForm({
   const [pbxSystem, setPbxSystem] = useState(PBX_OPTIONS[0]);
   const [projectName, setProjectName] = useState('');
   const [message, setMessage] = useState('');
-  const [kvkkAccepted, setKvkkAccepted] = useState(true);
+  const [kvkkAccepted, setKvkkAccepted] = useState(false);
   const [website, setWebsite] = useState(''); // Honeypot field
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -403,6 +403,7 @@ export default function ProductInquiryForm({
                       onClick={() => {
                         setSubmittedData(null);
                         setSubmitError('');
+                        setKvkkAccepted(false);
                       }}
                       className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
                     >
@@ -656,7 +657,16 @@ export default function ProductInquiryForm({
                       className="mt-1 rounded border-slate-300 text-[#E60012] focus:ring-[#E60012]"
                     />
                     <label htmlFor="kvkk-check" className="text-xs text-slate-500 leading-relaxed">
-                      6698 sayılı KVKK kapsamında iletişim bilgilerimin ürün bilgilendirmesi, teknik destek ve kurumsal fiyat teklifi sunulması amacıyla işlenmesini kabul ediyorum.
+                      6698 sayılı KVKK kapsamında{' '}
+                      <a
+                        href="/kvkk"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#E60012] font-bold underline hover:text-[#B9000E]"
+                      >
+                        KVKK Aydınlatma Metni
+                      </a>
+                      ’ni okudum; iletişim bilgilerimin ürün bilgilendirmesi, teknik destek ve kurumsal fiyat teklifi sunulması amacıyla işlenmesini kabul ediyorum.
                     </label>
                   </div>
 
@@ -667,7 +677,7 @@ export default function ProductInquiryForm({
 
                   <button
                     type="submit"
-                    disabled={isSubmitting || (!turnstileToken && !turnstileBypass)}
+                    disabled={isSubmitting || !kvkkAccepted || (!turnstileToken && !turnstileBypass)}
                     className="w-full py-4 px-6 rounded-xl bg-[#E60012] hover:bg-[#B9000E] disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-sm shadow-sm hover:shadow inline-flex items-center justify-center gap-2 transition-all"
                   >
                     <Send className="w-4 h-4" />

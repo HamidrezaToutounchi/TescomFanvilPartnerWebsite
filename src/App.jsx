@@ -22,14 +22,21 @@ const VALID_PAGES = [
   'gold-partner',
   'karsilastir',
   'teklif-sepeti',
-  'iletisim'
+  'iletisim',
+  'kvkk'
 ];
 
+function resolvePageFromLocation() {
+  const pathname = window.location.pathname.replace(/\/+$/, '');
+  if (pathname === '/kvkk') {
+    return 'kvkk';
+  }
+  const hash = window.location.hash.replace('#/', '').replace('#', '');
+  return VALID_PAGES.includes(hash) ? hash : 'home';
+}
+
 export default function App() {
-  const [currentPage, setCurrentPage] = useState(() => {
-    const hash = window.location.hash.replace('#/', '').replace('#', '');
-    return VALID_PAGES.includes(hash) ? hash : 'home';
-  });
+  const [currentPage, setCurrentPage] = useState(resolvePageFromLocation);
 
   const [selectedCategory, setSelectedCategory] = useState('Tümü');
   const [selectedSeries, setSelectedSeries] = useState('Tümü');
@@ -42,23 +49,26 @@ export default function App() {
 
   // Sync browser back/forward buttons with currentPage
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#/', '').replace('#', '');
-      if (VALID_PAGES.includes(hash)) {
-        setCurrentPage(hash);
-      } else if (!hash) {
-        setCurrentPage('home');
-      }
+    const syncLocation = () => {
+      setCurrentPage(resolvePageFromLocation());
     };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('hashchange', syncLocation);
+    window.addEventListener('popstate', syncLocation);
+    return () => {
+      window.removeEventListener('hashchange', syncLocation);
+      window.removeEventListener('popstate', syncLocation);
+    };
   }, []);
 
   // Navigate between dedicated pages & scroll to top
   const handleNavigatePage = (pageId) => {
     const target = VALID_PAGES.includes(pageId) ? pageId : 'home';
     setCurrentPage(target);
-    window.history.pushState(null, '', target === 'home' ? '#/' : `#/${target}`);
+    if (target === 'kvkk') {
+      window.history.pushState(null, '', '/kvkk');
+    } else {
+      window.history.pushState(null, '', target === 'home' ? '/#/' : `/#/${target}`);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -270,6 +280,24 @@ export default function App() {
               onUpdateCartQty={handleUpdateCartQty}
               onRemoveCartItem={handleRemoveCartItem}
             />
+          </>
+        )}
+
+        {/* 8. KVKK AYDINLATMA METNİ SAYFASI (/kvkk) */}
+        {currentPage === 'kvkk' && (
+          <>
+            <PageBanner
+              badge="6698 Sayılı KVKK"
+              title="KVKK Aydınlatma Metni"
+              onGoHome={() => handleNavigatePage('home')}
+            />
+            <section className="py-14 lg:py-20 bg-[#F8FAFC]">
+              <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="bg-white rounded-3xl border border-slate-200/90 shadow-soft p-6 sm:p-10 text-sm sm:text-base text-slate-800 leading-relaxed">
+                  BURAYA HUKUK BİRİMİNİN ONAYLADIĞI METİN GELECEK
+                </div>
+              </div>
+            </section>
           </>
         )}
       </main>

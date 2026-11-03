@@ -95,29 +95,31 @@ function sanitizeNoSqlKeys(value) {
 const leadZodSchema = z
   .object({
     requestType: z.enum(['bilgi', 'proje', 'bayi', 'demo'], {
-      errorMap: () => ({ message: 'Geçersiz başvuru türü seçildi.' })
+      error: 'Geçersiz başvuru türü seçildi.'
     }),
     fullName: z
-      .string()
+      .string({ error: 'Ad Soyad en az 2 karakter olmalıdır.' })
       .trim()
-      .min(2, 'Ad Soyad en az 2 karakter olmalıdır.')
-      .max(120, 'Ad Soyad en fazla 120 karakter olabilir.'),
+      .min(2, { error: 'Ad Soyad en az 2 karakter olmalıdır.' })
+      .max(120, { error: 'Ad Soyad en fazla 120 karakter olabilir.' }),
     company: z
-      .string()
+      .string({ error: 'Firma / Kurum adı en az 2 karakter olmalıdır.' })
       .trim()
-      .min(2, 'Firma / Kurum adı en az 2 karakter olmalıdır.')
-      .max(120, 'Firma / Kurum adı en fazla 120 karakter olabilir.'),
+      .min(2, { error: 'Firma / Kurum adı en az 2 karakter olmalıdır.' })
+      .max(120, { error: 'Firma / Kurum adı en fazla 120 karakter olabilir.' }),
     email: z
-      .string()
+      .string({ error: 'Geçerli bir kurumsal e-posta adresi giriniz.' })
       .trim()
-      .email('Geçerli bir kurumsal e-posta adresi giriniz.')
-      .max(254, 'E-posta adresi çok uzun.'),
+      .email({ error: 'Geçerli bir kurumsal e-posta adresi giriniz.' })
+      .max(254, { error: 'E-posta adresi çok uzun.' }),
     phone: z
-      .string()
+      .string({ error: 'Telefon numarası en az 7 karakter olmalıdır.' })
       .trim()
-      .min(7, 'Telefon numarası en az 7 karakter olmalıdır.')
-      .max(20, 'Telefon numarası en fazla 20 karakter olabilir.')
-      .regex(/^[0-9+\s]+$/, 'Telefon numarası yalnızca rakam, + ve boşluk içerebilir.'),
+      .min(7, { error: 'Telefon numarası en az 7 karakter olmalıdır.' })
+      .max(20, { error: 'Telefon numarası en fazla 20 karakter olabilir.' })
+      .regex(/^[0-9+\s]+$/, {
+        error: 'Telefon numarası yalnızca rakam, + ve boşluk içerebilir.'
+      }),
     selectedProduct: z.string().trim().max(200).optional().default(''),
     quantity: z.string().trim().max(200).optional().default(''),
     pbxSystem: z.string().trim().max(200).optional().default(''),
@@ -132,11 +134,11 @@ const leadZodSchema = z
           })
           .strict()
       )
-      .max(50, 'Sepette en fazla 50 kalem olabilir.')
+      .max(50, { error: 'Sepette en fazla 50 kalem olabilir.' })
       .optional()
       .default([]),
     kvkkAccepted: z.literal(true, {
-      errorMap: () => ({ message: 'KVKK aydınlatma metnini onaylamanız gerekmektedir.' })
+      error: 'KVKK aydınlatma metnini onaylamanız gerekmektedir.'
     }),
     website: z.string().max(200).optional().default(''),
     turnstileToken: z.string().max(2048).optional()
@@ -187,9 +189,31 @@ app.use((req, res, next) => {
 
 app.use(
   helmet({
-    contentSecurityPolicy: false
+    // SSL terminates at tescom-nginx; do NOT emit HSTS from internal app container
+    strictTransportSecurity: false,
+    referrerPolicy: { policy: 'no-referrer' },
+    contentSecurityPolicy: {
+      useDefaults: false,
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        imgSrc: ["'self'", 'data:'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+        connectSrc: ["'self'"],
+        frameAncestors: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        objectSrc: ["'none'"]
+      }
+    }
   })
 );
+
+app.use((_req, res, next) => {
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  next();
+});
 
 const ALLOWED_ORIGINS = new Set([
   'https://fanvilpartner.com',
@@ -418,6 +442,8 @@ app.post('/api/leads', leadsRateLimiter, async (req, res) => {
           message: validData.message,
           cartSnapshot: validData.cartSnapshot,
           kvkkAccepted: validData.kvkkAccepted,
+          kvkkAcceptedAt: new Date(),
+          kvkkTextVersion: 'v1',
           status: 'new',
           captchaStatus,
           isRead: false,
@@ -460,36 +486,51 @@ app.post('/api/leads', leadsRateLimiter, async (req, res) => {
 
 // ---------------------------------------------------------------------------
 // 6. Admin Session & API Routes (/api/admin/*)
+//    Reuses the existing Mongoose MongoClient (client: mongoose.connection.getClient())
+//    so a second connection pool is never opened.
 // ---------------------------------------------------------------------------
-const sessionMiddleware = session({
-  name: 'fvl_admin',
-  secret: SESSION_SECRET,
-  proxy: true,
-  resave: false,
-  saveUninitialized: false,
-  rolling: true,
-  store: MongoStore.create({
-    mongoUrl: MONGO_URI,
-    collectionName: 'admin_sessions',
-    ttl: 8 * 60 * 60 // 8 hours
-  }),
-  cookie: {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'strict',
-    path: '/',
-    maxAge: 8 * 60 * 60 * 1000 // 8 hours
+let cachedSessionMiddleware = null;
+
+function getOrCreateSessionMiddleware() {
+  if (cachedSessionMiddleware) {
+    return cachedSessionMiddleware;
   }
-});
+  cachedSessionMiddleware = session({
+    name: 'fvl_admin',
+    secret: SESSION_SECRET,
+    proxy: true,
+    resave: false,
+    saveUninitialized: false,
+    rolling: true,
+    store: MongoStore.create({
+      client: mongoose.connection.getClient(),
+      collectionName: 'admin_sessions',
+      ttl: 8 * 60 * 60 // 8 hours
+    }),
+    cookie: {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 8 * 60 * 60 * 1000 // 8 hours
+    }
+  });
+  return cachedSessionMiddleware;
+}
 
 app.use(
   '/api/admin',
-  (req, _res, next) => {
+  (req, res, next) => {
     // External traffic is strictly HTTPS via tescom-nginx; ensure internal hop never downgrades proto
     req.headers['x-forwarded-proto'] = 'https';
-    next();
+    if (mongoose.connection.readyState !== 1 || !mongoose.connection.getClient()) {
+      return res.status(503).json({
+        ok: false,
+        error: 'Veritabanı bağlantısı henüz hazır değil.'
+      });
+    }
+    return getOrCreateSessionMiddleware()(req, res, next);
   },
-  sessionMiddleware,
   adminRoutes
 );
 
@@ -556,7 +597,7 @@ async function connectWithRetry() {
     await mongoose.connect(MONGO_URI, {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
-      maxPoolSize: 10
+      maxPoolSize: 5
     });
     console.log('[INFO] Connected to MongoDB successfully.');
     startOutboxWorker();

@@ -7,6 +7,12 @@ services:
         VITE_TURNSTILE_SITE_KEY: ${VITE_TURNSTILE_SITE_KEY:-0x4AAAAAAFx74SjnJPAPh9Fk}
     container_name: tescom-fanvil-web
     restart: unless-stopped
+    mem_limit: 64m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       fanvil-api:
         condition: service_healthy
@@ -26,9 +32,16 @@ services:
       dockerfile: api/Dockerfile
     container_name: fanvil-api
     restart: unless-stopped
+    mem_limit: 256m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       NODE_ENV: production
       PORT: 3000
+      NODE_OPTIONS: "--max-old-space-size=160"
       MONGO_URI: ${MONGO_URI}
       ADMIN_BOOTSTRAP_IPS: ${ADMIN_BOOTSTRAP_IPS:-188.124.10.58}
       SESSION_SECRET: ${SESSION_SECRET}
@@ -51,6 +64,14 @@ services:
     image: mongo:7
     container_name: fanvil-mongo
     restart: unless-stopped
+    command: ["--wiredTigerCacheSizeGB", "0.25"]
+    mem_limit: 512m
+    memswap_limit: 768m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}

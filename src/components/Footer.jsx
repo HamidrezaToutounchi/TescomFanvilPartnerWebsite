@@ -204,7 +204,16 @@ export default function Footer({
               © {new Date().getFullYear()} <strong>fanvilpartner.com</strong> — Fanvil &amp; LINKVIL Türkiye Yetkili Gold Partner Portalı. Tüm hakları saklıdır.
             </div>
             <div className="flex items-center gap-4">
-              <span>KVKK Aydınlatma Metni</span>
+              <a
+                href="/kvkk"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigatePage('kvkk');
+                }}
+                className="hover:text-white transition-colors"
+              >
+                KVKK Aydınlatma Metni
+              </a>
               <span>•</span>
               <span>Garanti &amp; RMA Koşulları</span>
             </div>

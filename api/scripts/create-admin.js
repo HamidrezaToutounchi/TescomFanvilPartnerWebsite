@@ -99,6 +99,7 @@ async function main() {
     existing.role = 'admin';
     existing.failedAttempts = 0;
     existing.lockedUntil = null;
+    existing.passwordChangedAt = new Date();
     await existing.save();
     console.log(
       `[BAŞARILI] Mevcut '${usernameArg}' kullanıcısının şifresi güncellendi ve kilidi açıldı (rol: admin).`

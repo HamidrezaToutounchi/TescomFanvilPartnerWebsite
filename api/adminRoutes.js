@@ -4,6 +4,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
+const ipaddr = require('ipaddr.js');
 const { z } = require('zod');
 
 const {
@@ -24,9 +25,10 @@ const {
 } = require('./cryptoUtils');
 const {
   getBootstrapIps,
-  validateIpOrCidr,
+  validateAllowedIpRule,
   invalidateAllowedIpCache,
-  requireAllowedIp
+  requireAllowedIp,
+  assertSafeSmtpHost
 } = require('./ipAllowlist');
 const {
   invalidateMailTransporter,
@@ -37,6 +39,14 @@ const {
 const { enqueueLeadMailJob } = require('./outboxWorker');
 
 const router = express.Router();
+
+// Constant dummy hash computed once at startup to eliminate timing differences when username is not found
+const DUMMY_BCRYPT_HASH = bcrypt.hashSync(
+  'fanvil_dummy_timing_defense_password_2026_!@#',
+  12
+);
+
+const ABSOLUTE_SESSION_TIMEOUT_MS = 8 * 60 * 60 * 1000; // 8 hours
 
 // ---------------------------------------------------------------------------
 // Helper: Record Audit Log
@@ -56,6 +66,27 @@ async function writeAuditLog(req, action, details = '', explicitActor = null) {
   } catch (err) {
     console.error('[ERROR] Failed to write audit log:', err.message);
   }
+}
+
+function destroySessionAndClearCookie(req, res, callback) {
+  if (!req.session) {
+    res.clearCookie('fvl_admin', {
+      path: '/',
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict'
+    });
+    return callback();
+  }
+  req.session.destroy(() => {
+    res.clearCookie('fvl_admin', {
+      path: '/',
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict'
+    });
+    return callback();
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -91,36 +122,90 @@ router.use((req, res, next) => {
 });
 
 // ---------------------------------------------------------------------------
-// 2. Auth Middlewares
+// 2. Auth Middlewares (DB verification + 8h absolute timeout + passwordChangedAt)
 // ---------------------------------------------------------------------------
-function requireAuth(req, res, next) {
-  if (!req.session || !req.session.adminUser) {
-    return res.status(401).json({
-      ok: false,
-      error: 'Oturum süresi doldu veya giriş yapılmadı.'
-    });
+async function verifyActiveSession(req) {
+  if (!req.session || !req.session.adminUser || !req.session.adminUser.id) {
+    return { valid: false, reason: 'no_session' };
   }
-  return next();
+
+  const loginAtMs = Number(req.session.loginAt) || 0;
+  if (!loginAtMs || Date.now() - loginAtMs > ABSOLUTE_SESSION_TIMEOUT_MS) {
+    return { valid: false, reason: 'absolute_timeout' };
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(req.session.adminUser.id)) {
+    return { valid: false, reason: 'invalid_user_id' };
+  }
+
+  const dbUser = await AdminUser.findById(req.session.adminUser.id, {
+    role: 1,
+    passwordChangedAt: 1,
+    username: 1
+  }).lean();
+
+  if (!dbUser) {
+    return { valid: false, reason: 'user_deleted' };
+  }
+
+  if (dbUser.passwordChangedAt) {
+    const pwdChangedMs = new Date(dbUser.passwordChangedAt).getTime();
+    if (!Number.isNaN(pwdChangedMs) && loginAtMs < pwdChangedMs) {
+      return { valid: false, reason: 'password_changed' };
+    }
+  }
+
+  if (dbUser.role !== req.session.adminUser.role) {
+    req.session.adminUser.role = dbUser.role;
+  }
+
+  return { valid: true, user: req.session.adminUser };
 }
 
-function requireAdminRole(req, res, next) {
-  if (!req.session || !req.session.adminUser) {
-    return res.status(401).json({
-      ok: false,
-      error: 'Giriş yapmanız gerekiyor.'
-    });
+async function requireAuth(req, res, next) {
+  try {
+    const check = await verifyActiveSession(req);
+    if (!check.valid) {
+      return destroySessionAndClearCookie(req, res, () =>
+        res.status(401).json({
+          ok: false,
+          error: 'Oturum süresi doldu veya giriş yapılmadı.'
+        })
+      );
+    }
+    return next();
+  } catch (err) {
+    console.error('[ERROR] requireAuth check failed:', err.message);
+    return res.status(500).json({ ok: false, error: 'Oturum doğrulanamadı.' });
   }
-  if (req.session.adminUser.role !== 'admin') {
-    return res.status(403).json({
-      ok: false,
-      error: 'Bu işlem için yönetici (admin) yetkisi gereklidir.'
-    });
+}
+
+async function requireAdminRole(req, res, next) {
+  try {
+    const check = await verifyActiveSession(req);
+    if (!check.valid) {
+      return destroySessionAndClearCookie(req, res, () =>
+        res.status(401).json({
+          ok: false,
+          error: 'Giriş yapmanız gerekiyor.'
+        })
+      );
+    }
+    if (req.session.adminUser.role !== 'admin') {
+      return res.status(403).json({
+        ok: false,
+        error: 'Bu işlem için yönetici (admin) yetkisi gereklidir.'
+      });
+    }
+    return next();
+  } catch (err) {
+    console.error('[ERROR] requireAdminRole check failed:', err.message);
+    return res.status(500).json({ ok: false, error: 'Yetki doğrulanamadı.' });
   }
-  return next();
 }
 
 // ---------------------------------------------------------------------------
-// 3. Login Rate Limiter (5 attempts per 15 minutes per IP)
+// 3. Rate Limiters
 // ---------------------------------------------------------------------------
 const loginRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -134,23 +219,66 @@ const loginRateLimiter = rateLimit({
   }
 });
 
+// Separate rate limit for SMTP verify & test endpoints: 5 requests per 10 minutes per user
+const mailVerifyTestRateLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) =>
+    req.session?.adminUser?.id ||
+    req.session?.adminUser?.username ||
+    req.clientIpNormalized ||
+    req.ip,
+  message: {
+    ok: false,
+    error:
+      'Çok fazla SMTP bağlantı/test isteği gönderildi. Lütfen 10 dakika sonra tekrar deneyin.'
+  }
+});
+
 // ---------------------------------------------------------------------------
 // 4. Auth Endpoints
 // ---------------------------------------------------------------------------
-router.get('/me', (req, res) => {
-  const isAuthenticated = Boolean(req.session && req.session.adminUser);
-  return res.json({
-    ok: true,
-    authenticated: isAuthenticated,
-    user: isAuthenticated ? req.session.adminUser : null,
-    clientIp: req.clientIpNormalized || req.ip
-  });
+router.get('/me', async (req, res) => {
+  try {
+    if (!req.session || !req.session.adminUser) {
+      return res.json({
+        ok: true,
+        authenticated: false,
+        user: null,
+        clientIp: req.clientIpNormalized || req.ip
+      });
+    }
+
+    const check = await verifyActiveSession(req);
+    if (!check.valid) {
+      return destroySessionAndClearCookie(req, res, () =>
+        res.json({
+          ok: true,
+          authenticated: false,
+          user: null,
+          clientIp: req.clientIpNormalized || req.ip
+        })
+      );
+    }
+
+    return res.json({
+      ok: true,
+      authenticated: true,
+      user: check.user,
+      clientIp: req.clientIpNormalized || req.ip
+    });
+  } catch (err) {
+    console.error('[ERROR] GET /api/admin/me:', err.message);
+    return res.status(500).json({ ok: false, error: 'Oturum bilgisi alınamadı.' });
+  }
 });
 
 const loginSchema = z
   .object({
-    username: z.string().trim().min(1).max(60),
-    password: z.string().min(1).max(200)
+    username: z.string({ error: 'Kullanıcı adı zorunludur.' }).trim().min(1).max(60),
+    password: z.string({ error: 'Şifre zorunludur.' }).min(1).max(200)
   })
   .strict();
 
@@ -169,6 +297,8 @@ router.post('/login', loginRateLimiter, async (req, res) => {
 
     const user = await AdminUser.findOne({ username });
     if (!user) {
+      // Perform constant-time dummy bcrypt compare to mitigate username enumeration via timing
+      await bcrypt.compare(password, DUMMY_BCRYPT_HASH);
       await writeAuditLog(req, 'login_failed', `Kullanıcı bulunamadı: ${username}`, username);
       return res.status(401).json({
         ok: false,
@@ -214,13 +344,14 @@ router.post('/login', loginRateLimiter, async (req, res) => {
 
     // Successful login: reset failedAttempts, update lastLoginAt & lastLoginIp
     const loginIp = req.clientIpNormalized || req.ip || '';
+    const loginNow = new Date();
     await AdminUser.updateOne(
       { _id: user._id },
       {
         $set: {
           failedAttempts: 0,
           lockedUntil: null,
-          lastLoginAt: new Date(),
+          lastLoginAt: loginNow,
           lastLoginIp: loginIp
         }
       }
@@ -232,22 +363,32 @@ router.post('/login', loginRateLimiter, async (req, res) => {
       role: user.role
     };
 
-    req.session.adminUser = sessionUser;
-    req.session.save(async (saveErr) => {
-      if (saveErr) {
-        console.error('[ERROR] Session save error:', saveErr);
-        return res.status(500).json({ ok: false, error: 'Oturum kaydedilemedi.' });
+    // Regenerate session ID on login to prevent session fixation
+    req.session.regenerate((regenErr) => {
+      if (regenErr) {
+        console.error('[ERROR] Session regenerate error:', regenErr);
+        return res.status(500).json({ ok: false, error: 'Oturum oluşturulamadı.' });
       }
-      await writeAuditLog(
-        req,
-        'login_success',
-        `Giriş başarılı (rol: ${user.role})`,
-        user.username
-      );
-      return res.json({
-        ok: true,
-        user: sessionUser,
-        clientIp: loginIp
+
+      req.session.adminUser = sessionUser;
+      req.session.loginAt = loginNow.getTime();
+
+      req.session.save(async (saveErr) => {
+        if (saveErr) {
+          console.error('[ERROR] Session save error:', saveErr);
+          return res.status(500).json({ ok: false, error: 'Oturum kaydedilemedi.' });
+        }
+        await writeAuditLog(
+          req,
+          'login_success',
+          `Giriş başarılı (rol: ${user.role})`,
+          user.username
+        );
+        return res.json({
+          ok: true,
+          user: sessionUser,
+          clientIp: loginIp
+        });
       });
     });
   } catch (err) {
@@ -259,19 +400,11 @@ router.post('/login', loginRateLimiter, async (req, res) => {
 router.post('/logout', requireAuth, async (req, res) => {
   const username = req.session?.adminUser?.username || 'unknown';
   await writeAuditLog(req, 'logout', 'Oturum kapatıldı', username);
-  req.session.destroy(() => {
-    res.clearCookie('fvl_admin', {
-      path: '/',
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict'
-    });
-    return res.json({ ok: true });
-  });
+  destroySessionAndClearCookie(req, res, () => res.json({ ok: true }));
 });
 
 // ---------------------------------------------------------------------------
-// 5. Leads Endpoints (List, CSV Export, Detail, Status, Notes, Resend Mail)
+// 5. Leads Endpoints (List, CSV Export Stream, Detail, Status, Notes, Resend Mail)
 // ---------------------------------------------------------------------------
 function buildLeadsFilter(query) {
   const filter = {};
@@ -349,7 +482,6 @@ router.get('/leads', requireAuth, async (req, res) => {
       Lead.countDocuments({ isRead: false })
     ]);
 
-    // Attach latest mail job status for each lead in current page
     const leadIds = items.map((l) => l._id);
     const jobs = await MailJob.find({ leadId: { $in: leadIds } })
       .sort({ createdAt: -1 })
@@ -389,15 +521,13 @@ router.get('/leads', requireAuth, async (req, res) => {
 });
 
 router.get('/leads/export.csv', requireAuth, async (req, res) => {
+  let cursor = null;
   try {
     const filter = buildLeadsFilter(req.query);
-    const leads = await Lead.find(filter).sort({ createdAt: -1 }).limit(10000).lean();
+    const filename = `fanvil-leads-${new Date().toISOString().slice(0, 10)}.csv`;
 
-    await writeAuditLog(
-      req,
-      'csv_exported',
-      `${leads.length} adet lead CSV olarak dışa aktarıldı.`
-    );
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
     const headers = [
       'Referans Kodu',
@@ -417,9 +547,19 @@ router.get('/leads/export.csv', requireAuth, async (req, res) => {
       'IP Adresi'
     ];
 
-    const lines = [headers.map(escapeCsvCell).join(',')];
+    // Write UTF-8 BOM + CSV Header Row
+    res.write(`\uFEFF${headers.map(escapeCsvCell).join(',')}\r\n`);
 
-    for (const l of leads) {
+    cursor = Lead.find(filter).sort({ createdAt: -1 }).lean().cursor();
+
+    req.on('close', () => {
+      if (cursor) {
+        cursor.close().catch(() => {});
+      }
+    });
+
+    let exportedCount = 0;
+    for await (const l of cursor) {
       const dateStr = new Date(l.createdAt).toLocaleString('tr-TR', {
         timeZone: 'Europe/Istanbul'
       });
@@ -444,19 +584,27 @@ router.get('/leads/export.csv', requireAuth, async (req, res) => {
         cartStr,
         l.ip
       ];
-      lines.push(row.map(escapeCsvCell).join(','));
+
+      const chunk = `${row.map(escapeCsvCell).join(',')}\r\n`;
+      if (!res.write(chunk)) {
+        await new Promise((resolve) => res.once('drain', resolve));
+      }
+      exportedCount += 1;
     }
 
-    // UTF-8 BOM (\uFEFF) so Microsoft Excel opens Turkish characters properly
-    const csvContent = `\uFEFF${lines.join('\r\n')}`;
-    const filename = `fanvil-leads-${new Date().toISOString().slice(0, 10)}.csv`;
+    await writeAuditLog(
+      req,
+      'csv_exported',
+      `${exportedCount} adet lead CSV olarak dışa aktarıldı.`
+    );
 
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    return res.status(200).send(csvContent);
+    return res.end();
   } catch (err) {
     console.error('[ERROR] GET /api/admin/leads/export.csv:', err);
-    return res.status(500).json({ ok: false, error: 'CSV dışa aktarma başarısız.' });
+    if (!res.headersSent) {
+      return res.status(500).json({ ok: false, error: 'CSV dışa aktarma başarısız.' });
+    }
+    return res.end();
   }
 });
 
@@ -494,7 +642,9 @@ router.get('/leads/:id', requireAuth, async (req, res) => {
 
 const statusSchema = z
   .object({
-    status: z.enum(['new', 'contacted', 'quoted', 'won', 'lost'])
+    status: z.enum(['new', 'contacted', 'quoted', 'won', 'lost'], {
+      error: 'Geçersiz durum değeri.'
+    })
   })
   .strict();
 
@@ -535,7 +685,11 @@ router.patch('/leads/:id/status', requireAdminRole, async (req, res) => {
 
 const noteSchema = z
   .object({
-    text: z.string().trim().min(1, 'Not boş olamaz.').max(2000, 'Not en fazla 2000 karakter olabilir.')
+    text: z
+      .string({ error: 'Not boş olamaz.' })
+      .trim()
+      .min(1, { error: 'Not boş olamaz.' })
+      .max(2000, { error: 'Not en fazla 2000 karakter olabilir.' })
   })
   .strict();
 
@@ -615,6 +769,38 @@ router.post('/leads/:id/resend-mail', requireAdminRole, async (req, res) => {
 // ---------------------------------------------------------------------------
 // 6. Mail Settings Endpoints (Doğru Mail SMTP - role=admin ONLY)
 // ---------------------------------------------------------------------------
+const ALLOWED_SMTP_PORTS = [25, 465, 587, 2525];
+
+const smtpHostZod = z
+  .string({ error: 'SMTP sunucu adresi zorunludur.' })
+  .trim()
+  .toLowerCase()
+  .min(1, { error: 'SMTP sunucu adresi zorunludur.' })
+  .max(253, { error: 'SMTP sunucu adresi en fazla 253 karakter olabilir.' })
+  .regex(/^[a-z0-9.-]+$/, {
+    error: 'Geçerli bir SMTP sunucu adresi (hostname) giriniz; IP adresi kabul edilmez.'
+  })
+  .refine(
+    (val) =>
+      !ipaddr.isValid(val) &&
+      !/^\d+(\.\d+){3}$/.test(val) &&
+      !/^\d+$/.test(val) &&
+      val.includes('.') &&
+      !/\.[0-9]+$/.test(val) &&
+      !val.startsWith('.') &&
+      !val.endsWith('.'),
+    {
+      message: 'SMTP sunucu adresi olarak IP adresi kabul edilmez; geçerli bir hostname giriniz.'
+    }
+  );
+
+const smtpPortZod = z
+  .number({ error: 'SMTP portu yalnızca 25, 465, 587 veya 2525 olabilir.' })
+  .int({ error: 'SMTP portu tam sayı olmalıdır.' })
+  .refine((p) => ALLOWED_SMTP_PORTS.includes(p), {
+    message: 'SMTP portu yalnızca 25, 465, 587 veya 2525 olabilir.'
+  });
+
 router.get('/mail-settings', requireAdminRole, async (_req, res) => {
   try {
     const [existingDoc, recentAttempts] = await Promise.all([
@@ -655,20 +841,16 @@ router.get('/mail-settings', requireAdminRole, async (_req, res) => {
 
 const mailSettingsZodSchema = z
   .object({
-    smtpHost: z
-      .string()
-      .trim()
-      .min(1, 'SMTP sunucu adresi zorunludur.')
-      .max(254)
-      .default('mail.dogrumail.com'),
-    smtpPort: z.number().int().min(1).max(65535).default(587),
+    smtpHost: smtpHostZod.default('mail.dogrumail.com'),
+    smtpPort: smtpPortZod.default(587),
     smtpSecurity: z.enum(['starttls', 'tls']).optional().default('starttls'),
     smtpUser: z.string().trim().max(254).optional().default(''),
+    // Do NOT apply .trim() to smtpPassword!
     smtpPassword: z.string().max(500).optional().default(''),
     smtpFromAddress: z
-      .string()
+      .string({ error: 'Geçerli bir gönderen e-posta adresi giriniz.' })
       .trim()
-      .email('Geçerli bir gönderen e-posta adresi giriniz.')
+      .email({ error: 'Geçerli bir gönderen e-posta adresi giriniz.' })
       .max(254),
     smtpFromName: z.string().trim().max(120).optional().default('Tescom Fanvil Partner')
   })
@@ -676,31 +858,62 @@ const mailSettingsZodSchema = z
 
 async function buildEffectiveSettingsFromFormOrDb(formData) {
   const existing = await MailSettings.findOne({ key: 'default' }).lean();
-  const port = Number(formData.smtpPort) || existing?.smtpPort || 587;
+
+  const savedHost = String(existing?.smtpHost || 'mail.dogrumail.com')
+    .trim()
+    .toLowerCase();
+  const savedPort = Number(existing?.smtpPort || 587);
+  const savedFrom = String(existing?.smtpFromAddress || '').trim();
+  const savedUser = String(existing?.smtpUser || savedFrom || '').trim();
+
+  const incomingHost =
+    formData.smtpHost !== undefined && String(formData.smtpHost).trim() !== ''
+      ? String(formData.smtpHost).trim().toLowerCase()
+      : savedHost;
+  const incomingPort =
+    formData.smtpPort !== undefined ? Number(formData.smtpPort) : savedPort;
+  const incomingFrom =
+    formData.smtpFromAddress !== undefined && String(formData.smtpFromAddress).trim() !== ''
+      ? String(formData.smtpFromAddress).trim()
+      : savedFrom;
+  const incomingUser =
+    formData.smtpUser !== undefined && String(formData.smtpUser).trim() !== ''
+      ? String(formData.smtpUser).trim()
+      : incomingFrom || savedUser;
+
+  // Check if password is blank without trimming the password itself
+  const hasNewPassword =
+    typeof formData.smtpPassword === 'string' && formData.smtpPassword.trim() !== '';
+
+  const hostChanged = incomingHost !== savedHost;
+  const portChanged = incomingPort !== savedPort;
+  const userChanged = incomingUser !== savedUser;
+
+  if (!hasNewPassword && (hostChanged || portChanged || userChanged)) {
+    const err = new Error('Sunucu veya kullanıcı değişti; şifreyi yeniden girin.');
+    err.statusCode = 400;
+    err.errorCode = 'PASSWORD_REQUIRED_ON_CHANGE';
+    throw err;
+  }
+
   const resolvedSec = resolveSecurityForPort(
-    port,
+    incomingPort,
     formData.smtpSecurity || existing?.smtpSecurity || 'starttls'
   );
-  const fromAddress = (formData.smtpFromAddress || existing?.smtpFromAddress || '').trim();
-  const smtpUser = (formData.smtpUser || fromAddress || existing?.smtpUser || '').trim();
-  const plainPassword =
-    formData.smtpPassword && formData.smtpPassword.trim() !== ''
-      ? formData.smtpPassword.trim()
-      : '';
 
   return {
-    smtpHost: (formData.smtpHost || existing?.smtpHost || 'mail.dogrumail.com').trim(),
-    smtpPort: port,
+    smtpHost: incomingHost,
+    smtpPort: incomingPort,
     smtpSecurity: resolvedSec.mode,
-    smtpUser,
-    smtpFromAddress: fromAddress,
+    smtpUser: incomingUser,
+    smtpFromAddress: incomingFrom,
     smtpFromName: (
       formData.smtpFromName ||
       existing?.smtpFromName ||
       'Tescom Fanvil Partner'
     ).trim(),
-    plainPassword,
-    smtpPassEnc: existing?.smtpPassEnc || ''
+    plainPassword: hasNewPassword ? formData.smtpPassword : '',
+    smtpPassEnc: hasNewPassword ? '' : existing?.smtpPassEnc || ''
   };
 }
 
@@ -716,22 +929,53 @@ router.put('/mail-settings', requireAdminRole, async (req, res) => {
 
     const data = parsed.data;
     const existing = await MailSettings.findOne({ key: 'default' });
-    const resolvedSec = resolveSecurityForPort(data.smtpPort, data.smtpSecurity);
+
+    const savedHost = String(existing?.smtpHost || 'mail.dogrumail.com')
+      .trim()
+      .toLowerCase();
+    const savedPort = Number(existing?.smtpPort || 587);
+    const savedUser = String(
+      existing?.smtpUser || existing?.smtpFromAddress || ''
+    ).trim();
+
+    const nextHost = (data.smtpHost || 'mail.dogrumail.com').trim().toLowerCase();
+    const nextPort = Number(data.smtpPort || 587);
+    const nextUser = (data.smtpUser || data.smtpFromAddress).trim();
+
+    // Do NOT apply .trim() to smtpPassword itself; only check if blank
+    const hasNewPassword =
+      typeof data.smtpPassword === 'string' && data.smtpPassword.trim() !== '';
+
+    const hostChanged = nextHost !== savedHost;
+    const portChanged = nextPort !== savedPort;
+    const userChanged = nextUser !== savedUser;
+
+    if (!hasNewPassword && (hostChanged || portChanged || userChanged)) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Sunucu veya kullanıcı değişti; şifreyi yeniden girin.'
+      });
+    }
+
+    // Resolve DNS and block internal/loopback/private/reserved IPs (SSRF protection)
+    await assertSafeSmtpHost(nextHost);
+
+    const resolvedSec = resolveSecurityForPort(nextPort, data.smtpSecurity);
 
     const updateObj = {
       key: 'default',
-      smtpHost: data.smtpHost || 'mail.dogrumail.com',
-      smtpPort: data.smtpPort || 587,
+      smtpHost: nextHost,
+      smtpPort: nextPort,
       smtpSecurity: resolvedSec.mode,
-      smtpUser: data.smtpUser || data.smtpFromAddress,
+      smtpUser: nextUser,
       smtpFromAddress: data.smtpFromAddress,
       smtpFromName: data.smtpFromName || 'Tescom Fanvil Partner',
       updatedAt: new Date(),
       updatedBy: req.session.adminUser.username
     };
 
-    if (data.smtpPassword && data.smtpPassword.trim() !== '') {
-      updateObj.smtpPassEnc = encryptSecret(data.smtpPassword.trim());
+    if (hasNewPassword) {
+      updateObj.smtpPassEnc = encryptSecret(data.smtpPassword);
     } else if (existing?.smtpPassEnc) {
       updateObj.smtpPassEnc = existing.smtpPassEnc;
     } else {
@@ -762,8 +1006,9 @@ router.put('/mail-settings', requireAdminRole, async (req, res) => {
       smtpSecurity: updateObj.smtpSecurity
     });
   } catch (err) {
-    console.error('[ERROR] PUT /api/admin/mail-settings:', err);
-    return res.status(500).json({
+    console.error('[ERROR] PUT /api/admin/mail-settings:', err.message);
+    const status = err.statusCode === 400 ? 400 : 500;
+    return res.status(status).json({
       ok: false,
       error: err.message || 'Mail ayarları kaydedilirken hata oluştu.'
     });
@@ -772,139 +1017,192 @@ router.put('/mail-settings', requireAdminRole, async (req, res) => {
 
 const verifyFormSchema = z
   .object({
-    smtpHost: z.string().trim().optional().default('mail.dogrumail.com'),
-    smtpPort: z.number().int().min(1).max(65535).optional().default(587),
+    smtpHost: smtpHostZod.optional(),
+    smtpPort: smtpPortZod.optional(),
     smtpSecurity: z.enum(['starttls', 'tls']).optional().default('starttls'),
     smtpUser: z.string().trim().max(254).optional().default(''),
+    // Do NOT apply .trim() to smtpPassword!
     smtpPassword: z.string().max(500).optional().default(''),
     smtpFromAddress: z.string().trim().max(254).optional().default(''),
     smtpFromName: z.string().trim().max(120).optional().default('Tescom Fanvil Partner')
   })
   .strict();
 
-router.post('/mail-settings/verify', requireAdminRole, async (req, res) => {
-  try {
-    const parsed = verifyFormSchema.safeParse(req.body || {});
-    if (!parsed.success) {
+router.post(
+  '/mail-settings/verify',
+  requireAdminRole,
+  mailVerifyTestRateLimiter,
+  async (req, res) => {
+    let attemptedHost = String(req.body?.smtpHost || 'mail.dogrumail.com').slice(0, 253);
+    let attemptedPort = Number(req.body?.smtpPort) || 587;
+    try {
+      const parsed = verifyFormSchema.safeParse(req.body || {});
+      if (!parsed.success) {
+        const msg = parsed.error.issues?.[0]?.message || 'Geçersiz form verisi.';
+        await writeAuditLog(
+          req,
+          'mail_verify_failed',
+          `SMTP bağlantı doğrulaması reddedildi (${attemptedHost}:${attemptedPort}): ${msg}`
+        );
+        return res.status(400).json({
+          ok: false,
+          error: msg
+        });
+      }
+
+      const effective = await buildEffectiveSettingsFromFormOrDb(parsed.data);
+      attemptedHost = effective.smtpHost;
+      attemptedPort = effective.smtpPort;
+
+      const result = await verifySmtpConnection(effective);
+
+      await writeAuditLog(
+        req,
+        'mail_verify',
+        `SMTP bağlantı testi başarılı (${result.host}:${result.port} – ${result.security})`
+      );
+
+      return res.json({
+        ok: true,
+        message: `Bağlantı başarılı ✓ (${result.host}:${result.port} – ${result.security})`
+      });
+    } catch (err) {
+      console.error('[ERROR] POST /api/admin/mail-settings/verify:', err.message);
+      await writeAuditLog(
+        req,
+        'mail_verify_failed',
+        `SMTP bağlantı testi başarısız (${attemptedHost}:${attemptedPort}): ${err.message}`
+      );
       return res.status(400).json({
         ok: false,
-        error: parsed.error.issues?.[0]?.message || 'Geçersiz form verisi.'
+        error: err.message || 'SMTP bağlantısı doğrulanamadı.',
+        errorCode: err.errorCode || 'SMTP_ERROR'
       });
     }
-
-    const effective = await buildEffectiveSettingsFromFormOrDb(parsed.data);
-    const result = await verifySmtpConnection(effective);
-
-    return res.json({
-      ok: true,
-      message: `Bağlantı başarılı ✓ (${result.host}:${result.port} – ${result.security})`
-    });
-  } catch (err) {
-    console.error('[ERROR] POST /api/admin/mail-settings/verify:', err.message);
-    return res.status(400).json({
-      ok: false,
-      error: err.message || 'SMTP bağlantısı doğrulanamadı.',
-      errorCode: err.errorCode || 'SMTP_ERROR'
-    });
   }
-});
+);
 
 const testMailSchema = z
   .object({
-    toEmail: z.string().trim().email('Geçerli bir alıcı e-posta adresi giriniz.').max(254),
-    smtpHost: z.string().trim().optional(),
-    smtpPort: z.number().int().min(1).max(65535).optional(),
+    toEmail: z
+      .string({ error: 'Geçerli bir alıcı e-posta adresi giriniz.' })
+      .trim()
+      .email({ error: 'Geçerli bir alıcı e-posta adresi giriniz.' })
+      .max(254),
+    smtpHost: smtpHostZod.optional(),
+    smtpPort: smtpPortZod.optional(),
     smtpSecurity: z.enum(['starttls', 'tls']).optional(),
     smtpUser: z.string().trim().max(254).optional(),
+    // Do NOT apply .trim() to smtpPassword!
     smtpPassword: z.string().max(500).optional(),
     smtpFromAddress: z.string().trim().max(254).optional(),
     smtpFromName: z.string().trim().max(120).optional()
   })
   .strict();
 
-router.post('/mail-settings/test', requireAdminRole, async (req, res) => {
-  let targetEmail = '';
-  try {
-    const parsed = testMailSchema.safeParse(req.body || {});
-    if (!parsed.success) {
-      return res.status(400).json({
-        ok: false,
-        error: parsed.error.issues?.[0]?.message || 'Geçerli bir e-posta giriniz.'
+router.post(
+  '/mail-settings/test',
+  requireAdminRole,
+  mailVerifyTestRateLimiter,
+  async (req, res) => {
+    let targetEmail = '';
+    let attemptedHost = String(req.body?.smtpHost || 'mail.dogrumail.com').slice(0, 253);
+    let attemptedPort = Number(req.body?.smtpPort) || 587;
+    try {
+      const parsed = testMailSchema.safeParse(req.body || {});
+      if (!parsed.success) {
+        const msg = parsed.error.issues?.[0]?.message || 'Geçerli bir e-posta giriniz.';
+        await writeAuditLog(
+          req,
+          'mail_test_failed',
+          `SMTP test maili reddedildi (${attemptedHost}:${attemptedPort}): ${msg}`
+        );
+        return res.status(400).json({
+          ok: false,
+          error: msg
+        });
+      }
+
+      targetEmail = parsed.data.toEmail;
+      const effective = await buildEffectiveSettingsFromFormOrDb(parsed.data);
+      attemptedHost = effective.smtpHost;
+      attemptedPort = effective.smtpPort;
+
+      const nowStr = new Date().toLocaleString('tr-TR', {
+        timeZone: 'Europe/Istanbul'
       });
-    }
 
-    targetEmail = parsed.data.toEmail;
-    const effective = await buildEffectiveSettingsFromFormOrDb(parsed.data);
-
-    const nowStr = new Date().toLocaleString('tr-TR', {
-      timeZone: 'Europe/Istanbul'
-    });
-
-    await sendMailWithSettings(
-      effective,
-      {
-        toAddresses: [targetEmail],
-        subject: `Tescom Fanvil Partner – SMTP Test Maili`,
-        text: `Bu e-posta Tescom Fanvil Partner Admin Paneli üzerinden (${effective.smtpHost}:${effective.smtpPort}) kullanılarak ${nowStr} tarihinde test amacıyla gönderilmiştir.`,
-        html: `<div style="font-family:Arial,sans-serif;padding:20px;border:1px solid #e2e8f0;border-radius:12px;">
+      await sendMailWithSettings(
+        effective,
+        {
+          toAddresses: [targetEmail],
+          subject: `Tescom Fanvil Partner – SMTP Test Maili`,
+          text: `Bu e-posta Tescom Fanvil Partner Admin Paneli üzerinden (${effective.smtpHost}:${effective.smtpPort}) kullanılarak ${nowStr} tarihinde test amacıyla gönderilmiştir.`,
+          html: `<div style="font-family:Arial,sans-serif;padding:20px;border:1px solid #e2e8f0;border-radius:12px;">
           <h3 style="color:#0f172a;margin-top:0;">Tescom Fanvil Partner – SMTP Test Maili Başarılı ✓</h3>
           <p>Bu e-posta <strong>${escapeHtml(effective.smtpHost)}:${escapeHtml(effective.smtpPort)} (${escapeHtml(String(effective.smtpSecurity || 'starttls').toUpperCase())})</strong> üzerinden <strong>${escapeHtml(nowStr)}</strong> tarihinde başarıyla gönderilmiştir.</p>
         </div>`
-      },
-      { ephemeral: true }
-    );
+        },
+        { ephemeral: true }
+      );
 
-    await Promise.all([
-      MailAttempt.create({
-        recipient: targetEmail,
-        status: 'sent',
-        errorCode: '250 OK',
-        errorMessage: 'Test maili gönderildi',
-        refCode: 'TEST',
-        createdAt: new Date()
-      }),
-      writeAuditLog(
+      await Promise.all([
+        MailAttempt.create({
+          recipient: targetEmail,
+          status: 'sent',
+          errorCode: '250 OK',
+          errorMessage: 'Test maili gönderildi',
+          refCode: 'TEST',
+          createdAt: new Date()
+        }),
+        writeAuditLog(
+          req,
+          'mail_test_sent',
+          `${targetEmail} adresine SMTP test maili gönderildi (${effective.smtpHost}:${effective.smtpPort}).`
+        )
+      ]);
+
+      const recentAttempts = await MailAttempt.find({})
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .lean();
+
+      return res.json({
+        ok: true,
+        message: `Test e-postası başarıyla ${targetEmail} adresine gönderildi.`,
+        recentAttempts
+      });
+    } catch (err) {
+      console.error('[ERROR] POST /api/admin/mail-settings/test:', err.message);
+      await writeAuditLog(
         req,
-        'mail_test_sent',
-        `${targetEmail} adresine SMTP test maili gönderildi.`
-      )
-    ]);
-
-    const recentAttempts = await MailAttempt.find({})
-      .sort({ createdAt: -1 })
-      .limit(20)
-      .lean();
-
-    return res.json({
-      ok: true,
-      message: `Test e-postası başarıyla ${targetEmail} adresine gönderildi.`,
-      recentAttempts
-    });
-  } catch (err) {
-    console.error('[ERROR] POST /api/admin/mail-settings/test:', err.message);
-    if (targetEmail) {
-      await MailAttempt.create({
-        recipient: targetEmail,
-        status: 'failed',
-        errorCode: String(err.errorCode || 'SMTP_ERROR').slice(0, 100),
-        errorMessage: String(err.message || 'Hata').slice(0, 1000),
-        refCode: 'TEST',
-        createdAt: new Date()
-      }).catch(() => {});
+        'mail_test_failed',
+        `SMTP test maili başarısız (${attemptedHost}:${attemptedPort} -> ${targetEmail || '-'}): ${err.message}`
+      );
+      if (targetEmail) {
+        await MailAttempt.create({
+          recipient: targetEmail,
+          status: 'failed',
+          errorCode: String(err.errorCode || 'SMTP_ERROR').slice(0, 100),
+          errorMessage: String(err.message || 'Hata').slice(0, 1000),
+          refCode: 'TEST',
+          createdAt: new Date()
+        }).catch(() => {});
+      }
+      const recentAttempts = await MailAttempt.find({})
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .lean()
+        .catch(() => []);
+      return res.status(400).json({
+        ok: false,
+        error: err.message || 'Test maili gönderilemedi.',
+        errorCode: err.errorCode || 'SMTP_ERROR',
+        recentAttempts
+      });
     }
-    const recentAttempts = await MailAttempt.find({})
-      .sort({ createdAt: -1 })
-      .limit(20)
-      .lean()
-      .catch(() => []);
-    return res.status(400).json({
-      ok: false,
-      error: err.message || 'Test maili gönderilemedi.',
-      errorCode: err.errorCode || 'SMTP_ERROR',
-      recentAttempts
-    });
   }
-});
+);
 
 // ---------------------------------------------------------------------------
 // 7. Recipients Endpoints (role=admin ONLY)
@@ -939,8 +1237,16 @@ router.get('/recipients', requireAdminRole, async (_req, res) => {
 
 const recipientCreateSchema = z
   .object({
-    email: z.string().trim().email('Geçerli bir e-posta giriniz.').max(254),
-    name: z.string().trim().min(2, 'Ad en az 2 karakter olmalıdır.').max(120),
+    email: z
+      .string({ error: 'Geçerli bir e-posta giriniz.' })
+      .trim()
+      .email({ error: 'Geçerli bir e-posta giriniz.' })
+      .max(254),
+    name: z
+      .string({ error: 'Ad en az 2 karakter olmalıdır.' })
+      .trim()
+      .min(2, { error: 'Ad en az 2 karakter olmalıdır.' })
+      .max(120),
     active: z.boolean().optional().default(true),
     requestTypes: z
       .array(z.enum(['bilgi', 'proje', 'bayi', 'demo']))
@@ -1066,7 +1372,7 @@ router.get('/allowed-ips', requireAdminRole, async (req, res) => {
     const systemItems = bootstrapIps.map((ip) => ({
       _id: `system-${ip}`,
       ip,
-      note: 'Sistem IP\'si (silinemez)',
+      note: "Sistem IP'si (silinemez)",
       createdBy: 'system (.env)',
       createdAt: null,
       isSystem: true
@@ -1092,7 +1398,7 @@ router.get('/allowed-ips', requireAdminRole, async (req, res) => {
 
 const allowedIpCreateSchema = z
   .object({
-    ip: z.string().trim().min(3).max(64),
+    ip: z.string({ error: 'Geçerli bir IP veya CIDR giriniz.' }).trim().min(3).max(64),
     note: z.string().trim().max(200).optional().default('')
   })
   .strict();
@@ -1107,19 +1413,20 @@ router.post('/allowed-ips', requireAdminRole, async (req, res) => {
       });
     }
 
-    const normalized = validateIpOrCidr(parsed.data.ip);
-    if (!normalized) {
+    const ruleCheck = validateAllowedIpRule(parsed.data.ip);
+    if (!ruleCheck.ok) {
       return res.status(400).json({
         ok: false,
-        error: 'Geçersiz IPv4, IPv6 veya CIDR formatı (Örn: 188.124.10.58 veya 10.0.0.0/24).'
+        error: ruleCheck.error
       });
     }
 
+    const normalized = ruleCheck.normalized;
     const bootstrapIps = getBootstrapIps();
     if (bootstrapIps.includes(normalized)) {
       return res.status(400).json({
         ok: false,
-        error: 'Bu IP zaten sistem IP\'si olarak kalıcı izinli listede bulunuyor.'
+        error: "Bu IP zaten sistem IP'si olarak kalıcı izinli listede bulunuyor."
       });
     }
 
@@ -1161,7 +1468,7 @@ router.delete('/allowed-ips/:id', requireAdminRole, async (req, res) => {
     if (String(id).startsWith('system-')) {
       return res.status(400).json({
         ok: false,
-        error: 'Sistem IP\'si (.env ADMIN_BOOTSTRAP_IPS) silinemez.'
+        error: "Sistem IP'si (.env ADMIN_BOOTSTRAP_IPS) silinemez."
       });
     }
 
@@ -1177,7 +1484,7 @@ router.delete('/allowed-ips/:id', requireAdminRole, async (req, res) => {
     if (getBootstrapIps().includes(doc.ip)) {
       return res.status(400).json({
         ok: false,
-        error: 'Sistem IP\'si silinemez.'
+        error: "Sistem IP'si silinemez."
       });
     }
 
@@ -1213,16 +1520,18 @@ router.get('/users', requireAdminRole, async (_req, res) => {
 const createUserSchema = z
   .object({
     username: z
-      .string()
+      .string({ error: 'Kullanıcı adı en az 3 karakter olmalıdır.' })
       .trim()
-      .min(3, 'Kullanıcı adı en az 3 karakter olmalıdır.')
+      .min(3, { error: 'Kullanıcı adı en az 3 karakter olmalıdır.' })
       .max(60)
-      .regex(/^[a-zA-Z0-9._-]+$/, 'Kullanıcı adı sadece harf, rakam, nokta, tire ve alt çizgi içerebilir.'),
+      .regex(/^[a-zA-Z0-9._-]+$/, {
+        error: 'Kullanıcı adı sadece harf, rakam, nokta, tire ve alt çizgi içerebilir.'
+      }),
     password: z
-      .string()
-      .min(12, 'Şifre en az 12 karakter olmalıdır.')
+      .string({ error: 'Şifre en az 12 karakter olmalıdır.' })
+      .min(12, { error: 'Şifre en az 12 karakter olmalıdır.' })
       .max(200),
-    role: z.enum(['admin', 'viewer'])
+    role: z.enum(['admin', 'viewer'], { error: 'Geçersiz rol seçildi.' })
   })
   .strict();
 
@@ -1306,6 +1615,20 @@ router.delete('/users/:id', requireAdminRole, async (req, res) => {
     }
 
     await AdminUser.findByIdAndDelete(id);
+
+    // Delete all active sessions for the deleted user from admin_sessions collection
+    try {
+      const safeIdPattern = escapeRegex(String(id));
+      await mongoose.connection.db.collection('admin_sessions').deleteMany({
+        $or: [
+          { session: { $regex: `"id"\\s*:\\s*"${safeIdPattern}"` } },
+          { 'session.adminUser.id': String(id) }
+        ]
+      });
+    } catch (sessErr) {
+      console.error('[WARN] Failed to purge user sessions on delete:', sessErr.message);
+    }
+
     await writeAuditLog(
       req,
       'user_deleted',
@@ -1321,10 +1644,10 @@ router.delete('/users/:id', requireAdminRole, async (req, res) => {
 
 const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1).max(200),
+    currentPassword: z.string({ error: 'Mevcut şifre zorunludur.' }).min(1).max(200),
     newPassword: z
-      .string()
-      .min(12, 'Yeni şifre en az 12 karakter olmalıdır.')
+      .string({ error: 'Yeni şifre en az 12 karakter olmalıdır.' })
+      .min(12, { error: 'Yeni şifre en az 12 karakter olmalıdır.' })
       .max(200)
   })
   .strict();
@@ -1352,9 +1675,15 @@ router.post('/users/change-password', requireAdminRole, async (req, res) => {
       });
     }
 
+    const now = new Date();
     const newHash = await bcrypt.hash(parsed.data.newPassword, 12);
     user.passwordHash = newHash;
+    user.passwordChangedAt = now;
     await user.save();
+
+    // Update current session's loginAt so this device remains active while other devices are logged out
+    req.session.loginAt = now.getTime();
+    await new Promise((resolve) => req.session.save(() => resolve()));
 
     await writeAuditLog(req, 'password_changed', 'Kullanıcı kendi şifresini güncelledi.');
     return res.json({ ok: true, message: 'Şifreniz başarıyla güncellendi.' });

@@ -8,6 +8,7 @@ Vite + React ön yüz (`tescom-fanvil-web`), Node 20 + Express + Mongoose + Zod 
 
 - **8090 Portu ve Doğrudan IP Erişimi:** `8090` portu host üzerinde `0.0.0.0`'a açık kalmamalıdır (`127.0.0.1:8090:80` yapılmalı ya da `tescom-nginx` container adıyla bağlanıyorsa `ports` tamamen kaldırılmalıdır). Bu projede `tescom-nginx`, `tescom-network` üzerinden doğrudan `tescom-fanvil-web:80` adresine ulaştığı için `docker-compose.yml` içinden `ports:` bloğu tamamen kaldırılmıştır.
 - **`tescom-nginx` Yapılandırması:** `tescom-nginx`'teki `fanvilpartner.com` server bloğunda `proxy_pass http://tescom-fanvil-web:80;` olmalı; ayrıca `proxy_set_header Host $host;` ve `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;` satırları bulunmalıdır.
+- **HSTS ve HTTPS Yönlendirme Notu:** SSL sonlandırması dıştaki `tescom-nginx` katmanında yapılmaktadır; bu nedenle `tescom-nginx`'te `fanvilpartner.com` bloğuna `Strict-Transport-Security: max-age=31536000; includeSubDomains` ve HTTP→HTTPS 301 yönlendirmesi eklenmeli.
 - **Beklenen Davranış:** Deploy sonrası `http://188.124.10.4:8090` bağlantıyı reddetmeli (Connection refused), yalnızca `https://fanvilpartner.com` açılmalıdır.
 
 ---
@@ -64,7 +65,8 @@ docker exec -it fanvil-api node scripts/create-admin.js admin
 
 - **Fail-Open Davranışı:** Cloudflare Turnstile widget'ı yalnızca form bileşeni (`src/components/ProductInquiryForm.jsx`) yüklendiğinde dinamik olarak çağrılır. Cloudflare'e ulaşılamazsa (10 sn script/challenge zaman aşımı veya backend 5 sn `siteverify` ağ hatası) müşteri talebi **asla kaybolmaz**; `captchaStatus: "unverified"` olarak kaydedilir, bildirim mailinin konusuna `[DOĞRULANMADI]` eklenir ve yönetim panelinde sarı **"Doğrulanmadı"** rozetiyle işaretlenir.
 - **Sahte Token Koruması:** Geçersiz veya süresi dolmuş token ya da `hostname`/`action` uyuşmazlığı durumunda `400` döndürülür ve kayıt yapılmaz.
-- **KVKK Notu:** Turnstile kullanıldığı için aydınlatma metninde Cloudflare'e (yurt dışı) teknik veri aktarımı belirtilmeli.
+- **KVKK Yurt Dışı Aktarım Notu:** Turnstile kullanıldığı için aydınlatma metninde Cloudflare'e (yurt dışı) teknik veri aktarımı belirtilmeli.
+- **KVKK Saklama Süresi Notu:** Lead kayıtlarındaki `ip` ve `userAgent` alanları için `createdAt` üzerine otomatik silen TTL index konulmamıştır; KVKK saklama süresi hukukla netleştirilmeli (örn. 2 yıl sonunda sadece `ip` ve `userAgent` alanlarını anonimleştiren periyodik iş veya hukuk biriminin belirleyeceği saklama politikası uygulanmalıdır).
 
 ---
 
@@ -122,3 +124,10 @@ docker exec -i fanvil-mongo mongorestore \
   --archive \
   --gzip < ./backups/fanvil-YYYY-MM-DD.gz
 ```
+
+### Şifreli Yedekleme & Offsite (Sunucu Dışı) Kopya Önerisi (`rclone`)
+- `.env` dosyasında `BACKUP_PASSPHRASE_FILE=/home/tescom/.backup_passphrase` (`chmod 600`) tanımlanırsa `scripts/backup_mongo.sh` yedeği otomatik olarak `gpg --symmetric --cipher-algo AES256` (veya `age`) ile şifreler ve şifresiz arşivi siler.
+- Sunucu diski arızasına karşı şifrelenmiş yedeklerin her gece `rclone` ile şirket içi NAS veya S3 uyumlu bir depolamaya aktarılması önerilir:
+  ```bash
+  rclone copy /home/tescom/TescomFanvilPartnerWebsite/backups remote-s3:tescom-fanvil-backups --include "fanvil-*.gpg"
+  ```

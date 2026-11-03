@@ -3,6 +3,7 @@
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { decryptSecret, escapeHtml } = require('./cryptoUtils');
+const { assertSafeSmtpHost } = require('./ipAllowlist');
 
 const REQUEST_TYPE_LABELS = {
   bilgi: 'Ürün Hakkında Bilgi & Fiyat Al',
@@ -55,6 +56,10 @@ function resolveSecurityForPort(port, explicitSecurity) {
 }
 
 function classifySmtpError(err) {
+  if (err && (err.errorCode === 'SSRF_BLOCKED' || err.errorCode === 'INVALID_HOST' || err.errorCode === 'CONFIG_MISSING')) {
+    return err;
+  }
+
   const code = String(err?.code || '').toUpperCase();
   const responseCode = Number(err?.responseCode) || 0;
   const rawMsg = String(err?.response || err?.message || err || '');
@@ -236,6 +241,7 @@ async function verifySmtpConnection(settingsDoc) {
   let tempTransporter = null;
   try {
     const { transportConfig, host, port, sec } = buildTransportOptions(settingsDoc, false);
+    await assertSafeSmtpHost(host);
     tempTransporter = nodemailer.createTransport(transportConfig);
     await tempTransporter.verify();
     return {
@@ -276,6 +282,9 @@ async function sendMailWithSettings(
   const isEphemeral = Boolean(options && options.ephemeral);
 
   try {
+    const hostToCheck = (settingsDoc.smtpHost || 'mail.dogrumail.com').trim();
+    await assertSafeSmtpHost(hostToCheck);
+
     if (isEphemeral) {
       const { transportConfig } = buildTransportOptions(settingsDoc, false);
       transporter = nodemailer.createTransport(transportConfig);
