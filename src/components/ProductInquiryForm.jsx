@@ -394,13 +394,6 @@ export default function ProductInquiryForm({
                   <div className="flex flex-wrap items-center gap-3 pt-2">
                     <button
                       type="button"
-                      onClick={() => window.print()}
-                      className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold"
-                    >
-                      Talep Özeti PDF / Yazdır
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => {
                         setSubmittedData(null);
                         setSubmitError('');
