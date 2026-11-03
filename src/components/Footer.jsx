@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   PhoneCall,
-  Mail,
   MapPin,
   FileText,
   ShoppingBag,
@@ -170,7 +169,9 @@ export default function Footer({
               <div className="space-y-2.5 text-xs text-slate-400">
                 <div className="flex items-start gap-2.5">
                   <MapPin className="w-4 h-4 text-[#E60012] shrink-0 mt-0.5" />
-                  <span>Kurumsal Çözüm &amp; Dağıtım Merkezi — İstanbul / Türkiye</span>
+                  <span>
+                    Barbaros Hayrettin Paşa Mah. Şehitler Cad. Gümüş Residence No: 8 Daire: 323 Esenyurt / İSTANBUL
+                  </span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <PhoneCall className="w-4 h-4 text-[#E60012] shrink-0" />
@@ -178,13 +179,7 @@ export default function Footer({
                     href="tel:+908508501881"
                     className="hover:text-white font-semibold text-left"
                   >
-                    Sabit Hat: 0850 850 18 81 (+90 850 850 18 81)
-                  </a>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <Mail className="w-4 h-4 text-[#E60012] shrink-0" />
-                  <a href="mailto:proje@fanvilpartner.com" className="hover:text-white">
-                    proje@fanvilpartner.com
+                    Sabit Hat: 0850 850 18 81
                   </a>
                 </div>
               </div>

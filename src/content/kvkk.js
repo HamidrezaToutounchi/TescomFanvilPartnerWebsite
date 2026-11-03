@@ -12,7 +12,7 @@ export const COMPANY = {
   address:
     'Barbaros Hayrettin Paşa Mah. Şehitler Cad. Gümüş Residence No: 8 Daire: 323 Esenyurt / İSTANBUL',
   phones: [
-    { display: '0850 850 18 81 (+90 850 850 18 81)', href: 'tel:+908508501881' }
+    { display: '0850 850 18 81', href: 'tel:+908508501881' }
   ],
   kep: 'tescomtelekom@hs03.kep.tr',
   email: 'destek@tescom.com.tr',

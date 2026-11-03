@@ -744,7 +744,7 @@ export default function ProductInquiryForm({
                     href="tel:+908508501881"
                     className="text-base sm:text-lg font-extrabold text-slate-900 hover:text-[#E60012] transition-colors"
                   >
-                    0850 850 18 81 (+90 850 850 18 81)
+                    0850 850 18 81
                   </a>
                 </div>
               </div>
