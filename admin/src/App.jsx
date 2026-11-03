@@ -417,7 +417,10 @@ export default function App() {
               onBack={closeLeadDetail}
             />
           ) : (
-            <LeadsListView onSelectLead={openLeadDetail} />
+            <LeadsListView
+              onSelectLead={openLeadDetail}
+              onUnauthorized={() => setUser(null)}
+            />
           ))}
 
         {isAdmin && activeTab === 'mail' && (
@@ -435,13 +438,14 @@ export default function App() {
 // ===========================================================================
 // SCREEN 2 & 4: LEADS LIST + FILTERS + SERVER PAGINATION + CSV EXPORT
 // ===========================================================================
-function LeadsListView({ onSelectLead }) {
+function LeadsListView({ onSelectLead, onUnauthorized }) {
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [listError, setListError] = useState('');
 
   const [q, setQ] = useState('');
   const [requestType, setRequestType] = useState('');
@@ -466,21 +470,30 @@ function LeadsListView({ onSelectLead }) {
   const loadLeads = useCallback(
     async (targetPage = page) => {
       setLoading(true);
+      setListError('');
       try {
         const qs = buildQueryString(targetPage);
         const { res, data } = await apiFetch(`/api/admin/leads?${qs}`);
+        if (res.status === 401) {
+          if (onUnauthorized) onUnauthorized();
+          return;
+        }
         if (res.ok && data?.ok) {
           setItems(data.items || []);
           setTotal(data.total || 0);
           setTotalPages(data.totalPages || 1);
           setUnreadCount(data.unreadCount || 0);
           setPage(data.page || targetPage);
+        } else {
+          setListError(data?.error || `Lead listesi alınamadı (HTTP ${res.status}).`);
         }
+      } catch (_err) {
+        setListError('Sunucu bağlantısı sırasında hata oluştu.');
       } finally {
         setLoading(false);
       }
     },
-    [buildQueryString, page]
+    [buildQueryString, page, onUnauthorized]
   );
 
   useEffect(() => {
@@ -611,6 +624,12 @@ function LeadsListView({ onSelectLead }) {
       </form>
 
       {/* Table */}
+      {listError && (
+        <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{listError}</span>
+        </div>
+      )}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs">
           <thead>

@@ -352,14 +352,23 @@ const sessionMiddleware = session({
   }),
   cookie: {
     httpOnly: true,
-    secure: 'auto',
+    secure: true,
     sameSite: 'strict',
     path: '/',
     maxAge: 8 * 60 * 60 * 1000 // 8 hours
   }
 });
 
-app.use('/api/admin', sessionMiddleware, adminRoutes);
+app.use(
+  '/api/admin',
+  (req, _res, next) => {
+    // External traffic is strictly HTTPS via tescom-nginx; ensure internal hop never downgrades proto
+    req.headers['x-forwarded-proto'] = 'https';
+    next();
+  },
+  sessionMiddleware,
+  adminRoutes
+);
 
 // ---------------------------------------------------------------------------
 // 7. Admin Panel Static SPA Serving (/admin & /admin/*)

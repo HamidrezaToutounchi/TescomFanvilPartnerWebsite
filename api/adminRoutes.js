@@ -251,25 +251,24 @@ router.post('/login', loginRateLimiter, async (req, res) => {
       role: user.role
     };
 
-    req.session.regenerate((regenErr) => {
-      if (regenErr) {
-        console.error('[ERROR] Session regenerate error:', regenErr);
-        return res.status(500).json({ ok: false, error: 'Oturum başlatılamadı.' });
+    req.session.adminUser = sessionUser;
+    req.session.save(async (saveErr) => {
+      if (saveErr) {
+        console.error('[ERROR] Session save error:', saveErr);
+        return res.status(500).json({ ok: false, error: 'Oturum kaydedilemedi.' });
       }
-      req.session.adminUser = sessionUser;
-      req.session.save(async (saveErr) => {
-        if (saveErr) {
-          console.error('[ERROR] Session save error:', saveErr);
-          return res.status(500).json({ ok: false, error: 'Oturum kaydedilemedi.' });
-        }
-        await writeAuditLog(req, 'login_success', `Giriş başarılı (rol: ${user.role})`, user.username);
-        const secretWarning = await getSecretExpiryWarning();
-        return res.json({
-          ok: true,
-          user: sessionUser,
-          clientIp: loginIp,
-          secretExpiryWarning: secretWarning
-        });
+      await writeAuditLog(
+        req,
+        'login_success',
+        `Giriş başarılı (rol: ${user.role})`,
+        user.username
+      );
+      const secretWarning = await getSecretExpiryWarning();
+      return res.json({
+        ok: true,
+        user: sessionUser,
+        clientIp: loginIp,
+        secretExpiryWarning: secretWarning
       });
     });
   } catch (err) {
