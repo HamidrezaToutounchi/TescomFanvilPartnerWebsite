@@ -160,14 +160,13 @@ export default function Navbar({
               <span>FPRS Proje Kaydı</span>
             </button>
             <span className="hidden sm:inline text-slate-600">|</span>
-            <button
-              type="button"
-              onClick={() => onNavigateToForm('bilgi')}
+            <a
+              href="tel:+908508501881"
               className="inline-flex items-center gap-1.5 text-white font-semibold hover:text-amber-300 transition-colors whitespace-nowrap"
             >
               <PhoneCall className="w-3.5 h-3.5 text-[#E60012]" />
-              <span>Proje &amp; Satış Masası</span>
-            </button>
+              <span>0850 850 18 81</span>
+            </a>
           </div>
         </div>
       </div>

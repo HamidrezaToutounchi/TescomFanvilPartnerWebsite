@@ -730,6 +730,24 @@ export default function ProductInquiryForm({
 
             <FanvilGoldPartnerBadge size="md" />
 
+            {/* Direct Landline Contact Card */}
+            <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-red-50 text-[#E60012] flex items-center justify-center shrink-0">
+                <Phone className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                  Kurumsal Sabit İletişim Hattı
+                </div>
+                <a
+                  href="tel:+908508501881"
+                  className="text-base sm:text-lg font-extrabold text-slate-900 hover:text-[#E60012] transition-colors"
+                >
+                  0850 850 18 81 (+90 850 850 18 81)
+                </a>
+              </div>
+            </div>
+
             {/* Direct Advantages Card */}
             <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200/80 space-y-4">
               <h4 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">

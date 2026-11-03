@@ -174,13 +174,12 @@ export default function Footer({
                 </div>
                 <div className="flex items-center gap-2.5">
                   <PhoneCall className="w-4 h-4 text-[#E60012] shrink-0" />
-                  <button
-                    type="button"
-                    onClick={() => onNavigateToForm('bilgi')}
+                  <a
+                    href="tel:+908508501881"
                     className="hover:text-white font-semibold text-left"
                   >
-                    Kurumsal Proje &amp; Satış Hattı
-                  </button>
+                    Sabit Hat: 0850 850 18 81 (+90 850 850 18 81)
+                  </a>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <Mail className="w-4 h-4 text-[#E60012] shrink-0" />
