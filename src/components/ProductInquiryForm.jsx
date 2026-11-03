@@ -563,56 +563,22 @@ export default function ProductInquiryForm({
                     </div>
                   </div>
 
-                  {/* PBX Compatibility & Optional Project Name */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        Mevcut / Planlanan Santral Altyapısı
-                      </label>
-                      <select
-                        value={pbxSystem}
-                        onChange={(e) => setPbxSystem(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-[#E60012]"
-                      >
-                        {PBX_OPTIONS.map((opt) => (
-                          <option key={opt} value={opt}>
-                            {opt}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        Şehir / Proje Adı (Opsiyonel)
-                      </label>
-                      <input
-                        type="text"
-                        maxLength={200}
-                        value={projectName}
-                        onChange={(e) => setProjectName(e.target.value)}
-                        placeholder="Örn: İstanbul - 120 Odalı Otel Projesi"
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-[#E60012]"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Message / Inquiry Details */}
+                  {/* PBX Compatibility */}
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Ürün Hakkında Sorunuz veya Proje Notunuz
+                      Mevcut / Planlanan Santral Altyapısı
                     </label>
-                    <div className="relative">
-                      <MessageSquare className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                      <textarea
-                        rows="3"
-                        maxLength={3000}
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        placeholder="Ürün teknik özellikleri, stok durumu veya fiyat hakkındaki sorunuzu buraya yazabilirsiniz..."
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-[#E60012]"
-                      />
-                    </div>
+                    <select
+                      value={pbxSystem}
+                      onChange={(e) => setPbxSystem(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-[#E60012]"
+                    >
+                      {PBX_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* KVKK Aydınlatma Onayı & İsteğe Bağlı Ticari İleti Onayı */}
