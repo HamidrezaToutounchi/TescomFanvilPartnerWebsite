@@ -341,6 +341,7 @@ app.post('/api/leads', leadsRateLimiter, async (req, res) => {
 const sessionMiddleware = session({
   name: 'fvl_admin',
   secret: SESSION_SECRET,
+  proxy: true,
   resave: false,
   saveUninitialized: false,
   rolling: true,
@@ -351,7 +352,7 @@ const sessionMiddleware = session({
   }),
   cookie: {
     httpOnly: true,
-    secure: true,
+    secure: 'auto',
     sameSite: 'strict',
     path: '/',
     maxAge: 8 * 60 * 60 * 1000 // 8 hours

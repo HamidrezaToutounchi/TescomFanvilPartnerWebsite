@@ -1120,7 +1120,7 @@ function MailSettingsView({ onSecretWarningChange }) {
   const [testToEmail, setTestToEmail] = useState('');
   const [testResult, setTestResult] = useState(null);
 
-  const [mode, setMode] = useState('graph');
+  const [mode, setMode] = useState('smtp');
   const [tenantId, setTenantId] = useState('');
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
@@ -1129,10 +1129,10 @@ function MailSettingsView({ onSecretWarningChange }) {
   const [graphFromAddress, setGraphFromAddress] = useState('support@tescom.com');
   const [graphFromName, setGraphFromName] = useState('Fanvil Gold Partner Portal');
 
-  const [smtpHost, setSmtpHost] = useState('smtp.office365.com');
+  const [smtpHost, setSmtpHost] = useState('mail.dogrumail.com');
   const [smtpPort, setSmtpPort] = useState(587);
   const [smtpSecurity, setSmtpSecurity] = useState('starttls');
-  const [smtpUser, setSmtpUser] = useState('');
+  const [smtpUser, setSmtpUser] = useState('support@tescom.com');
   const [smtpPassword, setSmtpPassword] = useState('');
   const [hasSmtpPassword, setHasSmtpPassword] = useState(false);
   const [smtpFromAddress, setSmtpFromAddress] = useState('support@tescom.com');
@@ -1145,17 +1145,17 @@ function MailSettingsView({ onSecretWarningChange }) {
         const { res, data } = await apiFetch('/api/admin/mail-settings');
         if (res.ok && data?.ok && data.settings) {
           const s = data.settings;
-          setMode(s.mode || 'graph');
+          setMode(s.mode || 'smtp');
           setTenantId(s.tenantId || '');
           setClientId(s.clientId || '');
           setHasClientSecret(Boolean(s.hasClientSecret));
           setSecretExpiresAt(s.secretExpiresAt || '');
           setGraphFromAddress(s.graphFromAddress || 'support@tescom.com');
           setGraphFromName(s.graphFromName || 'Fanvil Gold Partner Portal');
-          setSmtpHost(s.smtpHost || 'smtp.office365.com');
+          setSmtpHost(s.smtpHost || 'mail.dogrumail.com');
           setSmtpPort(s.smtpPort || 587);
           setSmtpSecurity(s.smtpSecurity || 'starttls');
-          setSmtpUser(s.smtpUser || '');
+          setSmtpUser(s.smtpUser || 'support@tescom.com');
           setHasSmtpPassword(Boolean(s.hasSmtpPassword));
           setSmtpFromAddress(s.smtpFromAddress || 'support@tescom.com');
           setSmtpFromName(s.smtpFromName || 'Fanvil Gold Partner Portal');

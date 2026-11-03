@@ -190,7 +190,7 @@ async function sendViaGraph(settingsDoc, { toAddresses, subject, html, replyTo }
 }
 
 async function sendViaSmtp(settingsDoc, { toAddresses, subject, html, text, replyTo }) {
-  const host = (settingsDoc.smtpHost || 'smtp.office365.com').trim();
+  const host = (settingsDoc.smtpHost || 'mail.dogrumail.com').trim();
   const port = Number(settingsDoc.smtpPort) || 587;
   const isImplicitTls = settingsDoc.smtpSecurity === 'tls' || port === 465;
   const user = (settingsDoc.smtpUser || '').trim();
@@ -209,10 +209,11 @@ async function sendViaSmtp(settingsDoc, { toAddresses, subject, html, text, repl
     host,
     port,
     secure: isImplicitTls,
-    requireTLS: !isImplicitTls,
+    requireTLS: !isImplicitTls && port === 587,
     auth: { user, pass },
     tls: {
-      minVersion: 'TLSv1.2'
+      minVersion: 'TLSv1.2',
+      rejectUnauthorized: false
     },
     connectionTimeout: 15000,
     greetingTimeout: 15000,

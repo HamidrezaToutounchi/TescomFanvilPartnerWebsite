@@ -635,14 +635,14 @@ router.get('/mail-settings', requireAdminRole, async (_req, res) => {
     let doc = await MailSettings.findOne({ key: 'default' }).lean();
     if (!doc) {
       doc = {
-        mode: 'graph',
+        mode: 'smtp',
         tenantId: '',
         clientId: '',
         clientSecretEnc: '',
         secretExpiresAt: null,
         graphFromAddress: '',
         graphFromName: 'Fanvil Gold Partner Portal',
-        smtpHost: 'smtp.office365.com',
+        smtpHost: 'mail.dogrumail.com',
         smtpPort: 587,
         smtpSecurity: 'starttls',
         smtpUser: '',
@@ -657,7 +657,7 @@ router.get('/mail-settings', requireAdminRole, async (_req, res) => {
     return res.json({
       ok: true,
       settings: {
-        mode: doc.mode || 'graph',
+        mode: doc.mode || 'smtp',
         tenantId: doc.tenantId || '',
         clientId: doc.clientId || '',
         hasClientSecret: Boolean(doc.clientSecretEnc),
@@ -666,7 +666,7 @@ router.get('/mail-settings', requireAdminRole, async (_req, res) => {
           : '',
         graphFromAddress: doc.graphFromAddress || '',
         graphFromName: doc.graphFromName || 'Fanvil Gold Partner Portal',
-        smtpHost: doc.smtpHost || 'smtp.office365.com',
+        smtpHost: doc.smtpHost || 'mail.dogrumail.com',
         smtpPort: doc.smtpPort || 587,
         smtpSecurity: doc.smtpSecurity || 'starttls',
         smtpUser: doc.smtpUser || '',

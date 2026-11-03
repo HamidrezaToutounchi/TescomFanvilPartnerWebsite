@@ -109,7 +109,7 @@ const adminUserSchema = new mongoose.Schema(
 const mailSettingsSchema = new mongoose.Schema(
   {
     key: { type: String, required: true, unique: true, default: 'default' },
-    mode: { type: String, enum: ['graph', 'smtp'], default: 'graph' },
+    mode: { type: String, enum: ['graph', 'smtp'], default: 'smtp' },
 
     // Microsoft 365 Graph API fields
     tenantId: { type: String, default: '', maxlength: 120, trim: true },
@@ -119,8 +119,8 @@ const mailSettingsSchema = new mongoose.Schema(
     graphFromAddress: { type: String, default: '', maxlength: 254, trim: true },
     graphFromName: { type: String, default: 'Fanvil Gold Partner Portal', maxlength: 120, trim: true },
 
-    // SMTP fields (fallback / on-prem Exchange)
-    smtpHost: { type: String, default: 'smtp.office365.com', maxlength: 254, trim: true },
+    // SMTP fields (Exchange / mail.dogrumail.com)
+    smtpHost: { type: String, default: 'mail.dogrumail.com', maxlength: 254, trim: true },
     smtpPort: { type: Number, default: 587, min: 1, max: 65535 },
     smtpSecurity: { type: String, enum: ['starttls', 'tls'], default: 'starttls' },
     smtpUser: { type: String, default: '', maxlength: 254, trim: true },
