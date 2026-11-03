@@ -1,4 +1,4 @@
-# 1. Aşama: React & Vite Build
+# 1. Aşama: Ana Site (React & Vite) Build - Admin kodunu İÇERMEZ
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -6,7 +6,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-COPY . .
+COPY index.html vite.config.js tailwind.config.js postcss.config.js ./
+COPY public ./public
+COPY src ./src
 RUN npm run build
 
 # 2. Aşama: Hafif Nginx Sunucusu (Container içi Port 80)

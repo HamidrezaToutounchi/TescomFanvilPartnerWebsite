@@ -1,21 +1,28 @@
 {
   "name": "fanvil-partner-api",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Fanvil Gold Partner B2B Lead Capture API",
+  "description": "Fanvil Gold Partner B2B Lead Capture & Admin API",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "create-admin": "node scripts/create-admin.js"
   },
   "engines": {
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@azure/msal-node": "^2.16.2",
+    "bcryptjs": "^2.4.3",
+    "connect-mongo": "^5.1.0",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
+    "express-session": "^1.18.1",
     "helmet": "^8.0.0",
+    "ipaddr.js": "^2.2.0",
     "mongoose": "^8.9.5",
+    "nodemailer": "^6.10.0",
     "zod": "^3.24.1"
   }
 }

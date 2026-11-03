@@ -5,32 +5,40 @@ services:
       dockerfile: Dockerfile
     container_name: tescom-fanvil-web
     restart: unless-stopped
-    ports:
-      - "8090:80"
     depends_on:
       fanvil-api:
         condition: service_healthy
     networks:
       - default
       - tescom-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- --header='Host: fanvilpartner.com' http://127.0.0.1:80/api/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   fanvil-api:
     build:
-      context: ./api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: api/Dockerfile
     container_name: fanvil-api
     restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 3000
       MONGO_URI: ${MONGO_URI}
+      ADMIN_BOOTSTRAP_IPS: ${ADMIN_BOOTSTRAP_IPS:-188.124.10.58}
+      SESSION_SECRET: ${SESSION_SECRET}
+      SETTINGS_ENC_KEY: ${SETTINGS_ENC_KEY}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://fanvilpartner.com}
     depends_on:
       fanvil-mongo:
         condition: service_healthy
     networks:
       - default
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- --header='Host: fanvilpartner.com' http://127.0.0.1:3000/api/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5

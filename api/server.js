@@ -1,18 +1,44 @@
 'use strict';
 
+const path = require('path');
+const fs = require('fs');
 const crypto = require('crypto');
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const mongoose = require('mongoose');
 const { z } = require('zod');
 
+const { Lead } = require('./models');
+const {
+  normalizeClientIp,
+  isInternalDockerOrLoopbackIp,
+  requireAllowedIp
+} = require('./ipAllowlist');
+const {
+  enqueueLeadMailJob,
+  startOutboxWorker,
+  stopOutboxWorker
+} = require('./outboxWorker');
+const adminRoutes = require('./adminRoutes');
+
 const PORT = Number(process.env.PORT) || 3000;
 const MONGO_URI = process.env.MONGO_URI;
+const SESSION_SECRET = process.env.SESSION_SECRET;
+const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || 'https://fanvilpartner.com';
 
 if (!MONGO_URI) {
   console.error('[FATAL] MONGO_URI environment variable is required.');
+  process.exit(1);
+}
+
+if (!SESSION_SECRET || SESSION_SECRET.length < 32) {
+  console.error(
+    '[FATAL] SESSION_SECRET environment variable is required (at least 32 characters).'
+  );
   process.exit(1);
 }
 
@@ -20,59 +46,7 @@ mongoose.set('sanitizeFilter', true);
 mongoose.set('strictQuery', true);
 
 // ---------------------------------------------------------------------------
-// 1. Mongoose Schema & Model
-// ---------------------------------------------------------------------------
-const cartItemSchema = new mongoose.Schema(
-  {
-    model: { type: String, required: true, maxlength: 100, trim: true },
-    qty: { type: Number, required: true, min: 1, max: 10000 }
-  },
-  { _id: false }
-);
-
-const leadMongooseSchema = new mongoose.Schema(
-  {
-    refCode: { type: String, required: true, unique: true, index: true },
-    requestType: {
-      type: String,
-      required: true,
-      enum: ['bilgi', 'proje', 'bayi', 'demo']
-    },
-    fullName: { type: String, required: true, minlength: 2, maxlength: 120, trim: true },
-    company: { type: String, required: true, minlength: 2, maxlength: 120, trim: true },
-    email: { type: String, required: true, maxlength: 254, lowercase: true, trim: true },
-    phone: { type: String, required: true, minlength: 7, maxlength: 20, trim: true },
-    selectedProduct: { type: String, default: '', maxlength: 200, trim: true },
-    quantity: { type: String, default: '', maxlength: 200, trim: true },
-    pbxSystem: { type: String, default: '', maxlength: 200, trim: true },
-    projectName: { type: String, default: '', maxlength: 200, trim: true },
-    message: { type: String, default: '', maxlength: 3000, trim: true },
-    cartSnapshot: {
-      type: [cartItemSchema],
-      default: [],
-      validate: [(arr) => arr.length <= 50, 'En fazla 50 sepet kalemi gönderilebilir.']
-    },
-    kvkkAccepted: { type: Boolean, required: true },
-    status: { type: String, default: 'new', enum: ['new', 'contacted', 'closed'] },
-    ip: { type: String, default: '', maxlength: 100 },
-    userAgent: { type: String, default: '', maxlength: 300 },
-    createdAt: { type: Date, default: Date.now }
-  },
-  {
-    versionKey: false,
-    collection: 'leads'
-  }
-);
-
-// Explicit indexes required by specification
-leadMongooseSchema.index({ refCode: 1 }, { unique: true });
-leadMongooseSchema.index({ createdAt: -1 });
-leadMongooseSchema.index({ email: 1 });
-
-const Lead = mongoose.model('Lead', leadMongooseSchema);
-
-// ---------------------------------------------------------------------------
-// 2. Cryptographic RefCode Generator ("FVL-" + 8 uppercase alphanumeric)
+// 1. Cryptographic RefCode Generator ("FVL-" + 8 uppercase alphanumeric)
 // ---------------------------------------------------------------------------
 const REF_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
@@ -86,7 +60,7 @@ function generateRefCode() {
 }
 
 // ---------------------------------------------------------------------------
-// 3. NoSQL Key Sanitizer (strips keys starting with '$' or containing '.')
+// 2. NoSQL Key Sanitizer (strips keys starting with '$' or containing '.')
 // ---------------------------------------------------------------------------
 function sanitizeNoSqlKeys(value) {
   if (Array.isArray(value)) {
@@ -106,7 +80,7 @@ function sanitizeNoSqlKeys(value) {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Strict Zod Validation Schema
+// 3. Strict Zod Validation Schema for Public Lead Form
 // ---------------------------------------------------------------------------
 const leadZodSchema = z
   .object({
@@ -159,31 +133,69 @@ const leadZodSchema = z
   .strict();
 
 // ---------------------------------------------------------------------------
-// 5. Express Application Setup
+// 4. Express Application Setup
 // ---------------------------------------------------------------------------
 const app = express();
 
-// Internet -> tescom-nginx (SSL) -> tescom-fanvil-web (nginx) -> fanvil-api
-app.set('trust proxy', 2);
+// Trust ONLY loopback & Docker internal private/uniquelocal proxies
+// Prevents any external client from spoofing X-Forwarded-For
+app.set('trust proxy', ['loopback', 'uniquelocal']);
 app.disable('x-powered-by');
 
-app.use(helmet());
+// Allowed Host header set derived from PUBLIC_BASE_URL
+const ALLOWED_HOSTS = new Set(['fanvilpartner.com', 'www.fanvilpartner.com']);
+try {
+  const parsedUrl = new URL(PUBLIC_BASE_URL);
+  if (parsedUrl.hostname) {
+    ALLOWED_HOSTS.add(parsedUrl.hostname.toLowerCase());
+    if (!parsedUrl.hostname.startsWith('www.')) {
+      ALLOWED_HOSTS.add(`www.${parsedUrl.hostname.toLowerCase()}`);
+    }
+  }
+} catch (_e) {
+  // ignore URL parse error
+}
+
+// Host Header Validation (EK 2 - B.3)
+app.use((req, res, next) => {
+  // Exempt internal Docker healthcheck on /api/health
+  if (
+    req.method === 'GET' &&
+    req.path === '/api/health' &&
+    isInternalDockerOrLoopbackIp(req.socket?.remoteAddress)
+  ) {
+    return next();
+  }
+
+  const rawHost = (req.headers.host || '').split(':')[0].trim().toLowerCase();
+  if (!rawHost || !ALLOWED_HOSTS.has(rawHost)) {
+    return res.status(404).end();
+  }
+  return next();
+});
+
+app.use(
+  helmet({
+    contentSecurityPolicy: false
+  })
+);
 
 const ALLOWED_ORIGINS = new Set([
   'https://fanvilpartner.com',
-  'https://www.fanvilpartner.com'
+  'https://www.fanvilpartner.com',
+  PUBLIC_BASE_URL.replace(/\/+$/, '')
 ]);
 
 app.use(
   cors({
     origin(origin, callback) {
-      // Allow same-origin / server-to-server requests with no Origin header, or allowed domains
       if (!origin || ALLOWED_ORIGINS.has(origin)) {
         return callback(null, true);
       }
       return callback(new Error('CORS_NOT_ALLOWED'));
     },
-    methods: ['GET', 'POST'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Accept'],
     maxAge: 86400
   })
@@ -205,10 +217,11 @@ app.use((req, _res, next) => {
 });
 
 const leadsRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 requests per IP per 15 minutes
+  windowMs: 15 * 60 * 1000,
+  max: 5,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => normalizeClientIp(req.ip) || req.ip,
   message: {
     ok: false,
     error: 'Çok fazla talep gönderdiniz. Lütfen 15 dakika sonra tekrar deneyin.'
@@ -216,7 +229,7 @@ const leadsRateLimiter = rateLimit({
 });
 
 // ---------------------------------------------------------------------------
-// 6. Endpoints (ONLY GET /api/health and POST /api/leads)
+// 5. Public Health & Lead Capture Endpoints
 // ---------------------------------------------------------------------------
 app.get('/api/health', (_req, res) => {
   const isConnected = mongoose.connection.readyState === 1;
@@ -259,7 +272,7 @@ app.post('/api/leads', leadsRateLimiter, async (req, res) => {
     }
 
     const validData = parsed.data;
-    const clientIp = String(req.ip || '').slice(0, 100);
+    const clientIp = String(normalizeClientIp(req.ip) || req.ip || '').slice(0, 100);
     const userAgent = String(req.get('user-agent') || '').slice(0, 300);
 
     // 3. Save with refCode collision retry (max 3 attempts)
@@ -284,6 +297,8 @@ app.post('/api/leads', leadsRateLimiter, async (req, res) => {
           cartSnapshot: validData.cartSnapshot,
           kvkkAccepted: validData.kvkkAccepted,
           status: 'new',
+          isRead: false,
+          notes: [],
           ip: clientIp,
           userAgent,
           createdAt: new Date()
@@ -291,7 +306,6 @@ app.post('/api/leads', leadsRateLimiter, async (req, res) => {
         break;
       } catch (err) {
         lastErr = err;
-        // Mongo duplicate key error code is 11000
         if (err && err.code === 11000 && attempt < 3) {
           continue;
         }
@@ -302,6 +316,11 @@ app.post('/api/leads', leadsRateLimiter, async (req, res) => {
     if (!savedLead) {
       throw lastErr || new Error('Failed to generate unique refCode');
     }
+
+    // 4. Enqueue Outbox Mail Job asynchronously (NEVER blocks or fails lead creation)
+    enqueueLeadMailJob(savedLead._id).catch((mailErr) => {
+      console.error('[WARN] Outbox enqueue failed:', mailErr.message);
+    });
 
     return res.status(201).json({
       ok: true,
@@ -316,7 +335,63 @@ app.post('/api/leads', leadsRateLimiter, async (req, res) => {
   }
 });
 
-// Reject all other routes
+// ---------------------------------------------------------------------------
+// 6. Admin Session & API Routes (/api/admin/*)
+// ---------------------------------------------------------------------------
+const sessionMiddleware = session({
+  name: 'fvl_admin',
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  rolling: true,
+  store: MongoStore.create({
+    mongoUrl: MONGO_URI,
+    collectionName: 'admin_sessions',
+    ttl: 8 * 60 * 60 // 8 hours
+  }),
+  cookie: {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'strict',
+    path: '/',
+    maxAge: 8 * 60 * 60 * 1000 // 8 hours
+  }
+});
+
+app.use('/api/admin', sessionMiddleware, adminRoutes);
+
+// ---------------------------------------------------------------------------
+// 7. Admin Panel Static SPA Serving (/admin & /admin/*)
+//    Protected by IP Allowlist (returns 404 to unauthorized IPs!)
+// ---------------------------------------------------------------------------
+const adminDistDir = path.join(__dirname, 'public', 'admin');
+const adminIndexHtml = path.join(adminDistDir, 'index.html');
+
+app.use(
+  '/admin',
+  requireAllowedIp,
+  (_req, res, next) => {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    res.setHeader('Cache-Control', 'no-store');
+    next();
+  },
+  express.static(adminDistDir, {
+    index: false,
+    etag: false,
+    lastModified: false
+  })
+);
+
+app.get(['/admin', '/admin/*'], requireAllowedIp, (_req, res) => {
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  res.setHeader('Cache-Control', 'no-store');
+  if (fs.existsSync(adminIndexHtml)) {
+    return res.sendFile(adminIndexHtml);
+  }
+  return res.status(404).type('text/plain').send('404 Not Found');
+});
+
+// Reject all other routes with 404
 app.use((_req, res) => {
   res.status(404).json({ ok: false, error: 'Bulunamadı.' });
 });
@@ -337,7 +412,7 @@ app.use((err, _req, res, _next) => {
 });
 
 // ---------------------------------------------------------------------------
-// 7. MongoDB Connection with Retry & Graceful Shutdown
+// 8. MongoDB Connection with Retry, Outbox Worker & Graceful Shutdown
 // ---------------------------------------------------------------------------
 let isShuttingDown = false;
 let retryTimer = null;
@@ -351,6 +426,7 @@ async function connectWithRetry() {
       maxPoolSize: 10
     });
     console.log('[INFO] Connected to MongoDB successfully.');
+    startOutboxWorker();
   } catch (err) {
     console.error('[WARN] MongoDB connection failed, retrying in 4s:', err.message);
     if (!isShuttingDown) {
@@ -377,6 +453,7 @@ async function gracefulShutdown(signal) {
   isShuttingDown = true;
   console.log(`[INFO] Received ${signal}. Starting graceful shutdown...`);
 
+  stopOutboxWorker();
   if (retryTimer) {
     clearTimeout(retryTimer);
   }
@@ -392,7 +469,6 @@ async function gracefulShutdown(signal) {
     }
   });
 
-  // Force exit if shutdown takes longer than 10 seconds
   setTimeout(() => {
     console.error('[WARN] Forced shutdown after timeout.');
     process.exit(1);
