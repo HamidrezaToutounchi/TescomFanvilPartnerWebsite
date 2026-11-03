@@ -13,7 +13,8 @@ const {
   MailSettings,
   MailRecipient,
   MailJob,
-  AuditLog
+  AuditLog,
+  MailAttempt
 } = require('./models');
 const {
   encryptSecret,
@@ -29,6 +30,8 @@ const {
 } = require('./ipAllowlist');
 const {
   invalidateMailTransporter,
+  resolveSecurityForPort,
+  verifySmtpConnection,
   sendMailWithSettings
 } = require('./mailer');
 const { enqueueLeadMailJob } = require('./outboxWorker');
@@ -607,18 +610,20 @@ router.post('/leads/:id/resend-mail', requireAdminRole, async (req, res) => {
 // ---------------------------------------------------------------------------
 router.get('/mail-settings', requireAdminRole, async (_req, res) => {
   try {
-    let doc = await MailSettings.findOne({ key: 'default' }).lean();
-    if (!doc) {
-      doc = {
-        smtpHost: 'mail.dogrumail.com',
-        smtpPort: 587,
-        smtpSecurity: 'starttls',
-        smtpUser: '',
-        smtpPassEnc: '',
-        smtpFromAddress: '',
-        smtpFromName: 'Tescom Fanvil Partner'
-      };
-    }
+    const [existingDoc, recentAttempts] = await Promise.all([
+      MailSettings.findOne({ key: 'default' }).lean(),
+      MailAttempt.find({}).sort({ createdAt: -1 }).limit(20).lean()
+    ]);
+
+    const doc = existingDoc || {
+      smtpHost: 'mail.dogrumail.com',
+      smtpPort: 587,
+      smtpSecurity: 'starttls',
+      smtpUser: '',
+      smtpPassEnc: '',
+      smtpFromAddress: '',
+      smtpFromName: 'Tescom Fanvil Partner'
+    };
 
     return res.json({
       ok: true,
@@ -626,13 +631,14 @@ router.get('/mail-settings', requireAdminRole, async (_req, res) => {
         smtpHost: doc.smtpHost || 'mail.dogrumail.com',
         smtpPort: doc.smtpPort || 587,
         smtpSecurity: doc.smtpSecurity || 'starttls',
-        smtpUser: doc.smtpUser || '',
+        smtpUser: doc.smtpUser || doc.smtpFromAddress || '',
         hasSmtpPassword: Boolean(doc.smtpPassEnc),
         smtpFromAddress: doc.smtpFromAddress || '',
         smtpFromName: doc.smtpFromName || 'Tescom Fanvil Partner',
         updatedAt: doc.updatedAt || null,
         updatedBy: doc.updatedBy || ''
-      }
+      },
+      recentAttempts
     });
   } catch (err) {
     console.error('[ERROR] GET /api/admin/mail-settings:', err);
@@ -642,10 +648,15 @@ router.get('/mail-settings', requireAdminRole, async (_req, res) => {
 
 const mailSettingsZodSchema = z
   .object({
-    smtpHost: z.string().trim().min(1, 'SMTP Host zorunludur.').max(254).default('mail.dogrumail.com'),
+    smtpHost: z
+      .string()
+      .trim()
+      .min(1, 'SMTP sunucu adresi zorunludur.')
+      .max(254)
+      .default('mail.dogrumail.com'),
     smtpPort: z.number().int().min(1).max(65535).default(587),
-    smtpSecurity: z.enum(['starttls', 'tls']).default('starttls'),
-    smtpUser: z.string().trim().min(1, 'Kullanıcı adı zorunludur.').max(254),
+    smtpSecurity: z.enum(['starttls', 'tls']).optional().default('starttls'),
+    smtpUser: z.string().trim().max(254).optional().default(''),
     smtpPassword: z.string().max(500).optional().default(''),
     smtpFromAddress: z
       .string()
@@ -655,6 +666,36 @@ const mailSettingsZodSchema = z
     smtpFromName: z.string().trim().max(120).optional().default('Tescom Fanvil Partner')
   })
   .strict();
+
+async function buildEffectiveSettingsFromFormOrDb(formData) {
+  const existing = await MailSettings.findOne({ key: 'default' }).lean();
+  const port = Number(formData.smtpPort) || existing?.smtpPort || 587;
+  const resolvedSec = resolveSecurityForPort(
+    port,
+    formData.smtpSecurity || existing?.smtpSecurity || 'starttls'
+  );
+  const fromAddress = (formData.smtpFromAddress || existing?.smtpFromAddress || '').trim();
+  const smtpUser = (formData.smtpUser || fromAddress || existing?.smtpUser || '').trim();
+  const plainPassword =
+    formData.smtpPassword && formData.smtpPassword.trim() !== ''
+      ? formData.smtpPassword.trim()
+      : '';
+
+  return {
+    smtpHost: (formData.smtpHost || existing?.smtpHost || 'mail.dogrumail.com').trim(),
+    smtpPort: port,
+    smtpSecurity: resolvedSec.mode,
+    smtpUser,
+    smtpFromAddress: fromAddress,
+    smtpFromName: (
+      formData.smtpFromName ||
+      existing?.smtpFromName ||
+      'Tescom Fanvil Partner'
+    ).trim(),
+    plainPassword,
+    smtpPassEnc: existing?.smtpPassEnc || ''
+  };
+}
 
 router.put('/mail-settings', requireAdminRole, async (req, res) => {
   try {
@@ -668,13 +709,14 @@ router.put('/mail-settings', requireAdminRole, async (req, res) => {
 
     const data = parsed.data;
     const existing = await MailSettings.findOne({ key: 'default' });
+    const resolvedSec = resolveSecurityForPort(data.smtpPort, data.smtpSecurity);
 
     const updateObj = {
       key: 'default',
       smtpHost: data.smtpHost || 'mail.dogrumail.com',
       smtpPort: data.smtpPort || 587,
-      smtpSecurity: data.smtpSecurity || 'starttls',
-      smtpUser: data.smtpUser,
+      smtpSecurity: resolvedSec.mode,
+      smtpUser: data.smtpUser || data.smtpFromAddress,
       smtpFromAddress: data.smtpFromAddress,
       smtpFromName: data.smtpFromName || 'Tescom Fanvil Partner',
       updatedAt: new Date(),
@@ -709,7 +751,8 @@ router.put('/mail-settings', requireAdminRole, async (req, res) => {
 
     return res.json({
       ok: true,
-      hasSmtpPassword: Boolean(updateObj.smtpPassEnc)
+      hasSmtpPassword: Boolean(updateObj.smtpPassEnc),
+      smtpSecurity: updateObj.smtpSecurity
     });
   } catch (err) {
     console.error('[ERROR] PUT /api/admin/mail-settings:', err);
@@ -720,15 +763,62 @@ router.put('/mail-settings', requireAdminRole, async (req, res) => {
   }
 });
 
+const verifyFormSchema = z
+  .object({
+    smtpHost: z.string().trim().optional().default('mail.dogrumail.com'),
+    smtpPort: z.number().int().min(1).max(65535).optional().default(587),
+    smtpSecurity: z.enum(['starttls', 'tls']).optional().default('starttls'),
+    smtpUser: z.string().trim().max(254).optional().default(''),
+    smtpPassword: z.string().max(500).optional().default(''),
+    smtpFromAddress: z.string().trim().max(254).optional().default(''),
+    smtpFromName: z.string().trim().max(120).optional().default('Tescom Fanvil Partner')
+  })
+  .strict();
+
+router.post('/mail-settings/verify', requireAdminRole, async (req, res) => {
+  try {
+    const parsed = verifyFormSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        ok: false,
+        error: parsed.error.issues?.[0]?.message || 'Geçersiz form verisi.'
+      });
+    }
+
+    const effective = await buildEffectiveSettingsFromFormOrDb(parsed.data);
+    const result = await verifySmtpConnection(effective);
+
+    return res.json({
+      ok: true,
+      message: `Bağlantı başarılı ✓ (${result.host}:${result.port} – ${result.security})`
+    });
+  } catch (err) {
+    console.error('[ERROR] POST /api/admin/mail-settings/verify:', err.message);
+    return res.status(400).json({
+      ok: false,
+      error: err.message || 'SMTP bağlantısı doğrulanamadı.',
+      errorCode: err.errorCode || 'SMTP_ERROR'
+    });
+  }
+});
+
 const testMailSchema = z
   .object({
-    toEmail: z.string().trim().email('Geçerli bir alıcı e-posta adresi giriniz.').max(254)
+    toEmail: z.string().trim().email('Geçerli bir alıcı e-posta adresi giriniz.').max(254),
+    smtpHost: z.string().trim().optional(),
+    smtpPort: z.number().int().min(1).max(65535).optional(),
+    smtpSecurity: z.enum(['starttls', 'tls']).optional(),
+    smtpUser: z.string().trim().max(254).optional(),
+    smtpPassword: z.string().max(500).optional(),
+    smtpFromAddress: z.string().trim().max(254).optional(),
+    smtpFromName: z.string().trim().max(120).optional()
   })
   .strict();
 
 router.post('/mail-settings/test', requireAdminRole, async (req, res) => {
+  let targetEmail = '';
   try {
-    const parsed = testMailSchema.safeParse(req.body);
+    const parsed = testMailSchema.safeParse(req.body || {});
     if (!parsed.success) {
       return res.status(400).json({
         ok: false,
@@ -736,48 +826,75 @@ router.post('/mail-settings/test', requireAdminRole, async (req, res) => {
       });
     }
 
-    const settingsDoc = await MailSettings.findOne({ key: 'default' }).lean();
-    if (!settingsDoc || !settingsDoc.smtpPassEnc) {
-      return res.status(400).json({
-        ok: false,
-        error: 'Önce SMTP mail ayarlarını ve şifreyi kaydedin.'
-      });
-    }
+    targetEmail = parsed.data.toEmail;
+    const effective = await buildEffectiveSettingsFromFormOrDb(parsed.data);
 
     const nowStr = new Date().toLocaleString('tr-TR', {
       timeZone: 'Europe/Istanbul'
     });
 
-    // Runs transporter.verify() + real test email send
     await sendMailWithSettings(
-      settingsDoc,
+      effective,
       {
-        toAddresses: [parsed.data.toEmail],
+        toAddresses: [targetEmail],
         subject: `Tescom Fanvil Partner – SMTP Test Maili`,
-        text: `Bu e-posta Tescom Fanvil Partner Admin Paneli üzerinden Doğru Mail SMTP (${settingsDoc.smtpHost}:${settingsDoc.smtpPort}) kullanılarak ${nowStr} tarihinde test amacıyla gönderilmiştir.`,
+        text: `Bu e-posta Tescom Fanvil Partner Admin Paneli üzerinden (${effective.smtpHost}:${effective.smtpPort}) kullanılarak ${nowStr} tarihinde test amacıyla gönderilmiştir.`,
         html: `<div style="font-family:Arial,sans-serif;padding:20px;border:1px solid #e2e8f0;border-radius:12px;">
           <h3 style="color:#0f172a;margin-top:0;">Tescom Fanvil Partner – SMTP Test Maili Başarılı ✓</h3>
-          <p>Bu e-posta <strong>${escapeHtml(settingsDoc.smtpHost)}:${escapeHtml(settingsDoc.smtpPort)} (${escapeHtml(String(settingsDoc.smtpSecurity || 'starttls').toUpperCase())})</strong> üzerinden <strong>${escapeHtml(nowStr)}</strong> tarihinde başarıyla doğrulanıp gönderilmiştir.</p>
+          <p>Bu e-posta <strong>${escapeHtml(effective.smtpHost)}:${escapeHtml(effective.smtpPort)} (${escapeHtml(String(effective.smtpSecurity || 'starttls').toUpperCase())})</strong> üzerinden <strong>${escapeHtml(nowStr)}</strong> tarihinde başarıyla gönderilmiştir.</p>
         </div>`
       },
-      { verifyFirst: true }
+      { ephemeral: true }
     );
 
-    await writeAuditLog(
-      req,
-      'mail_test_sent',
-      `${parsed.data.toEmail} adresine SMTP test maili gönderildi.`
-    );
+    await Promise.all([
+      MailAttempt.create({
+        recipient: targetEmail,
+        status: 'sent',
+        errorCode: '250 OK',
+        errorMessage: 'Test maili gönderildi',
+        refCode: 'TEST',
+        createdAt: new Date()
+      }),
+      writeAuditLog(
+        req,
+        'mail_test_sent',
+        `${targetEmail} adresine SMTP test maili gönderildi.`
+      )
+    ]);
+
+    const recentAttempts = await MailAttempt.find({})
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
 
     return res.json({
       ok: true,
-      message: `SMTP bağlantısı doğrulandı (verify) ve test e-postası başarıyla ${parsed.data.toEmail} adresine gönderildi.`
+      message: `Test e-postası başarıyla ${targetEmail} adresine gönderildi.`,
+      recentAttempts
     });
   } catch (err) {
     console.error('[ERROR] POST /api/admin/mail-settings/test:', err.message);
+    if (targetEmail) {
+      await MailAttempt.create({
+        recipient: targetEmail,
+        status: 'failed',
+        errorCode: String(err.errorCode || 'SMTP_ERROR').slice(0, 100),
+        errorMessage: String(err.message || 'Hata').slice(0, 1000),
+        refCode: 'TEST',
+        createdAt: new Date()
+      }).catch(() => {});
+    }
+    const recentAttempts = await MailAttempt.find({})
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean()
+      .catch(() => []);
     return res.status(400).json({
       ok: false,
-      error: err.message || 'Test maili gönderilemedi.'
+      error: err.message || 'Test maili gönderilemedi.',
+      errorCode: err.errorCode || 'SMTP_ERROR',
+      recentAttempts
     });
   }
 });

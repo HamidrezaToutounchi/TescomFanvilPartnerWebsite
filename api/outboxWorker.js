@@ -1,6 +1,6 @@
 'use strict';
 
-const { Lead, MailSettings, MailRecipient, MailJob } = require('./models');
+const { Lead, MailSettings, MailRecipient, MailJob, MailAttempt } = require('./models');
 const {
   invalidateMailTransporter,
   isMailSettingsConfigured,
@@ -100,6 +100,7 @@ async function processSingleJob(job) {
   }
 
   const toAddresses = matchingRecipients.map((r) => r.email);
+  const recipientStr = toAddresses.join(', ').slice(0, 500);
   const { subject, text, html, replyTo } = buildLeadNotificationContent(lead);
 
   try {
@@ -111,21 +112,41 @@ async function processSingleJob(job) {
       replyTo
     });
 
-    await MailJob.findByIdAndUpdate(job._id, {
-      $set: {
+    await Promise.all([
+      MailJob.findByIdAndUpdate(job._id, {
+        $set: {
+          status: 'sent',
+          attempts: job.attempts + 1,
+          lastError: '',
+          sentAt: new Date(),
+          lockedAt: null,
+          updatedAt: new Date()
+        }
+      }),
+      MailAttempt.create({
+        recipient: recipientStr,
         status: 'sent',
-        attempts: job.attempts + 1,
-        lastError: '',
-        sentAt: new Date(),
-        lockedAt: null,
-        updatedAt: new Date()
-      }
-    });
+        errorCode: '250 OK',
+        errorMessage: 'Gönderildi',
+        refCode: lead.refCode || '',
+        createdAt: new Date()
+      })
+    ]);
   } catch (err) {
     const attemptNum = job.attempts + 1;
     const errorMsg = String(err?.message || err).slice(0, 1500);
+    const errorCode = String(err?.errorCode || 'SMTP_ERR').slice(0, 100);
 
-    // 550 / 554 permanent errors or max attempts reached -> mark failed immediately without retry
+    await MailAttempt.create({
+      recipient: recipientStr,
+      status: 'failed',
+      errorCode,
+      errorMessage: errorMsg,
+      refCode: lead.refCode || '',
+      createdAt: new Date()
+    }).catch(() => {});
+
+    // 535/EAUTH, 530, 550/553/554 permanent errors or max attempts reached -> mark failed immediately without retry
     if (err?.permanent || attemptNum >= MAX_ATTEMPTS) {
       await MailJob.findByIdAndUpdate(job._id, {
         $set: {

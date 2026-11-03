@@ -202,6 +202,22 @@ const auditLogSchema = new mongoose.Schema(
   }
 );
 
+// 8. Mail Attempt Logs Collection ("mail_attempts" - tracks last 20+ delivery attempts)
+const mailAttemptSchema = new mongoose.Schema(
+  {
+    recipient: { type: String, required: true, maxlength: 500, trim: true },
+    status: { type: String, enum: ['sent', 'failed'], required: true },
+    errorCode: { type: String, default: '250 OK', maxlength: 100, trim: true },
+    errorMessage: { type: String, default: '', maxlength: 1000, trim: true },
+    refCode: { type: String, default: '', maxlength: 40, trim: true },
+    createdAt: { type: Date, default: Date.now, index: -1 }
+  },
+  {
+    versionKey: false,
+    collection: 'mail_attempts'
+  }
+);
+
 const Lead = mongoose.model('Lead', leadMongooseSchema);
 const AllowedIp = mongoose.model('AllowedIp', allowedIpSchema);
 const AdminUser = mongoose.model('AdminUser', adminUserSchema);
@@ -209,6 +225,7 @@ const MailSettings = mongoose.model('MailSettings', mailSettingsSchema);
 const MailRecipient = mongoose.model('MailRecipient', mailRecipientSchema);
 const MailJob = mongoose.model('MailJob', mailJobSchema);
 const AuditLog = mongoose.model('AuditLog', auditLogSchema);
+const MailAttempt = mongoose.model('MailAttempt', mailAttemptSchema);
 
 module.exports = {
   Lead,
@@ -217,5 +234,6 @@ module.exports = {
   MailSettings,
   MailRecipient,
   MailJob,
-  AuditLog
+  AuditLog,
+  MailAttempt
 };

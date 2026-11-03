@@ -1106,45 +1106,98 @@ function LeadDetailView({ leadId, isAdmin, onBack }) {
 }
 
 // ===========================================================================
-// SCREEN 5: DOĞRU MAİL SMTP SETTINGS & TEST EMAIL
+// SCREEN 5: DOĞRU MAİL (HOSTED EXCHANGE) SMTP SETTINGS & TEST EMAIL
 // ===========================================================================
+const SMTP_PROVIDERS = [
+  { id: 'dogrumail', label: 'Doğru Mail', host: 'mail.dogrumail.com', port: 587 },
+  { id: 'gmail', label: 'Gmail', host: 'smtp.gmail.com', port: 587 },
+  { id: 'office365', label: 'Outlook / Microsoft 365', host: 'smtp.office365.com', port: 587 },
+  { id: 'yandex', label: 'Yandex', host: 'smtp.yandex.com.tr', port: 465 }
+];
+
 function MailSettingsView() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [testing, setTesting] = useState(false);
   const [message, setMessage] = useState(null);
+  const [verifyResult, setVerifyResult] = useState(null);
   const [testToEmail, setTestToEmail] = useState('');
   const [testResult, setTestResult] = useState(null);
+  const [recentAttempts, setRecentAttempts] = useState([]);
 
-  const [smtpHost, setSmtpHost] = useState('mail.dogrumail.com');
-  const [smtpPort, setSmtpPort] = useState(587);
-  const [smtpSecurity, setSmtpSecurity] = useState('starttls');
-  const [smtpUser, setSmtpUser] = useState('');
-  const [smtpPassword, setSmtpPassword] = useState('');
-  const [hasSmtpPassword, setHasSmtpPassword] = useState(false);
   const [smtpFromAddress, setSmtpFromAddress] = useState('');
   const [smtpFromName, setSmtpFromName] = useState('Tescom Fanvil Partner');
+  const [smtpPassword, setSmtpPassword] = useState('');
+  const [hasSmtpPassword, setHasSmtpPassword] = useState(false);
+  const [smtpHost, setSmtpHost] = useState('mail.dogrumail.com');
+  const [smtpPort, setSmtpPort] = useState(587);
+  const [smtpUser, setSmtpUser] = useState('');
+  const [smtpSecurity, setSmtpSecurity] = useState('starttls');
+
+  const loadMailSettings = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { res, data } = await apiFetch('/api/admin/mail-settings');
+      if (res.ok && data?.ok && data.settings) {
+        const s = data.settings;
+        setSmtpHost(s.smtpHost || 'mail.dogrumail.com');
+        setSmtpPort(s.smtpPort || 587);
+        setSmtpSecurity(s.smtpSecurity || 'starttls');
+        setSmtpFromAddress(s.smtpFromAddress || '');
+        setSmtpUser(s.smtpUser || s.smtpFromAddress || '');
+        setHasSmtpPassword(Boolean(s.hasSmtpPassword));
+        setSmtpFromName(s.smtpFromName || 'Tescom Fanvil Partner');
+        setRecentAttempts(Array.isArray(data.recentAttempts) ? data.recentAttempts : []);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const { res, data } = await apiFetch('/api/admin/mail-settings');
-        if (res.ok && data?.ok && data.settings) {
-          const s = data.settings;
-          setSmtpHost(s.smtpHost || 'mail.dogrumail.com');
-          setSmtpPort(s.smtpPort || 587);
-          setSmtpSecurity(s.smtpSecurity || 'starttls');
-          setSmtpUser(s.smtpUser || '');
-          setHasSmtpPassword(Boolean(s.hasSmtpPassword));
-          setSmtpFromAddress(s.smtpFromAddress || '');
-          setSmtpFromName(s.smtpFromName || 'Tescom Fanvil Partner');
-        }
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+    loadMailSettings();
+  }, [loadMailSettings]);
+
+  const numericPort = Number(smtpPort) || 587;
+  const isAutoPort = numericPort === 465 || numericPort === 587 || numericPort === 25;
+  const effectiveSecurity =
+    numericPort === 465
+      ? 'tls'
+      : numericPort === 587 || numericPort === 25
+        ? 'starttls'
+        : smtpSecurity;
+
+  const handleFromAddressChange = (val) => {
+    const prevFrom = smtpFromAddress;
+    setSmtpFromAddress(val);
+    if (!smtpUser || smtpUser === prevFrom) {
+      setSmtpUser(val);
+    }
+  };
+
+  const handlePortChange = (val) => {
+    setSmtpPort(val);
+    const p = Number(val);
+    if (p === 465) setSmtpSecurity('tls');
+    else if (p === 587 || p === 25) setSmtpSecurity('starttls');
+  };
+
+  const handleSelectProvider = (provider) => {
+    setSmtpHost(provider.host);
+    setSmtpPort(provider.port);
+    setSmtpSecurity(provider.port === 465 ? 'tls' : 'starttls');
+  };
+
+  const buildCurrentFormPayload = () => ({
+    smtpHost: smtpHost.trim() || 'mail.dogrumail.com',
+    smtpPort: numericPort,
+    smtpSecurity: effectiveSecurity,
+    smtpUser: (smtpUser || smtpFromAddress).trim(),
+    smtpPassword,
+    smtpFromAddress: smtpFromAddress.trim(),
+    smtpFromName: smtpFromName.trim() || 'Tescom Fanvil Partner'
+  });
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -1153,15 +1206,7 @@ function MailSettingsView() {
     try {
       const { res, data } = await apiFetch('/api/admin/mail-settings', {
         method: 'PUT',
-        body: JSON.stringify({
-          smtpHost,
-          smtpPort: Number(smtpPort) || 587,
-          smtpSecurity,
-          smtpUser,
-          smtpPassword,
-          smtpFromAddress,
-          smtpFromName
-        })
+        body: JSON.stringify(buildCurrentFormPayload())
       });
       if (!res.ok || !data?.ok) {
         setMessage({ type: 'error', text: data?.error || 'Ayarlar kaydedilemedi.' });
@@ -1175,6 +1220,28 @@ function MailSettingsView() {
     }
   };
 
+  const handleVerifyConnection = async () => {
+    if (verifying) return;
+    setVerifying(true);
+    setVerifyResult(null);
+    try {
+      const { res, data } = await apiFetch('/api/admin/mail-settings/verify', {
+        method: 'POST',
+        body: JSON.stringify(buildCurrentFormPayload())
+      });
+      if (res.ok && data?.ok) {
+        setVerifyResult({ type: 'ok', text: data.message || 'Bağlantı doğrulandı ✓' });
+      } else {
+        setVerifyResult({
+          type: 'error',
+          text: data?.error || 'SMTP bağlantısı doğrulanamadı.'
+        });
+      }
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   const handleSendTest = async (e) => {
     e.preventDefault();
     if (!testToEmail.trim() || testing) return;
@@ -1183,8 +1250,14 @@ function MailSettingsView() {
     try {
       const { res, data } = await apiFetch('/api/admin/mail-settings/test', {
         method: 'POST',
-        body: JSON.stringify({ toEmail: testToEmail.trim() })
+        body: JSON.stringify({
+          ...buildCurrentFormPayload(),
+          toEmail: testToEmail.trim()
+        })
       });
+      if (Array.isArray(data?.recentAttempts)) {
+        setRecentAttempts(data.recentAttempts);
+      }
       if (res.ok && data?.ok) {
         setTestResult({ type: 'ok', text: data.message || 'Test maili gönderildi.' });
       } else {
@@ -1203,10 +1276,10 @@ function MailSettingsView() {
     <div className="max-w-4xl space-y-6">
       <div>
         <h1 className="text-2xl font-extrabold text-slate-900">
-          Mail Gönderim Ayarları (Doğru Mail SMTP)
+          Mail Ayarları (Doğru Mail Hosted Exchange SMTP)
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          SMTP parolası veritabanında AES-256-GCM ile şifreli saklanır ve hiçbir zaman geri gösterilmez.
+          Şifre veritabanında AES-256-GCM ile şifreli saklanır ve API cevabında asla geri dönmez.
         </p>
       </div>
 
@@ -1231,11 +1304,107 @@ function MailSettingsView() {
         onSubmit={handleSave}
         className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6"
       >
-        <div className="space-y-4">
+        {/* Quick Provider Buttons (only fills host & port) */}
+        <div>
+          <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-500 mb-2">
+            Sağlayıcı Seç (Hızlı Doldur: Sadece Sunucu ve Port)
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {SMTP_PROVIDERS.map((p) => {
+              const active =
+                smtpHost.trim().toLowerCase() === p.host && Number(smtpPort) === p.port;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => handleSelectProvider(p)}
+                  className={`px-3.5 py-2 rounded-xl border text-xs font-bold transition-all ${
+                    active
+                      ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  {p.label} ({p.host}:{p.port})
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="space-y-4 pt-2 border-t border-slate-100">
+          {/* Sender Email & Display Name */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                E-posta Adresi (Gönderen) *
+              </label>
+              <input
+                type="email"
+                required
+                value={smtpFromAddress}
+                onChange={(e) => handleFromAddressChange(e.target.value)}
+                placeholder="support@tescom.com.tr"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Görünen Ad
+              </label>
+              <input
+                type="text"
+                value={smtpFromName}
+                onChange={(e) => setSmtpFromName(e.target.value)}
+                placeholder="Tescom Fanvil Partner"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
+              />
+            </div>
+          </div>
+
+          {/* Username & Password */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Kullanıcı Adı (Varsayılan: E-posta adresiyle aynı)
+              </label>
+              <input
+                type="text"
+                required
+                value={smtpUser}
+                onChange={(e) => setSmtpUser(e.target.value)}
+                placeholder={smtpFromAddress || 'support@tescom.com.tr'}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-bold text-slate-700">
+                  Şifre {hasSmtpPassword ? '(Değiştirmek istemiyorsanız boş bırakın)' : '*'}
+                </label>
+                {hasSmtpPassword && (
+                  <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                    •••••••• (kayıtlı)
+                  </span>
+                )}
+              </div>
+              <input
+                type="password"
+                value={smtpPassword}
+                onChange={(e) => setSmtpPassword(e.target.value)}
+                placeholder={hasSmtpPassword ? '••••••••' : 'SMTP şifresini girin'}
+                autoComplete="new-password"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
+              />
+            </div>
+          </div>
+
+          {/* SMTP Server, Port & Auto Security */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                SMTP Host *
+                SMTP Sunucu *
               </label>
               <input
                 type="text"
@@ -1255,102 +1424,48 @@ function MailSettingsView() {
                 type="number"
                 required
                 value={smtpPort}
-                onChange={(e) => setSmtpPort(e.target.value)}
+                onChange={(e) => handlePortChange(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
               />
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Güvenlik
+                Güvenlik {isAutoPort ? '(Port\'a Göre Otomatik)' : '(Manuel Seçim)'}
               </label>
-              <select
-                value={smtpSecurity}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setSmtpSecurity(v);
-                  setSmtpPort(v === 'tls' ? 465 : 587);
-                }}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
-              >
-                <option value="starttls">STARTTLS (587)</option>
-                <option value="tls">SSL / TLS (465)</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                SMTP Kullanıcı Adı *
-              </label>
-              <input
-                type="text"
-                required
-                value={smtpUser}
-                onChange={(e) => setSmtpUser(e.target.value)}
-                placeholder="Gönderen kullanıcı adını girin"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-bold text-slate-700">
-                  SMTP Şifresi *
-                </label>
-                {hasSmtpPassword && (
-                  <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
-                    kayıtlı ✓
-                  </span>
-                )}
-              </div>
-              <input
-                type="password"
-                value={smtpPassword}
-                onChange={(e) => setSmtpPassword(e.target.value)}
-                placeholder={
-                  hasSmtpPassword
-                    ? 'Değiştirmek istemiyorsanız boş bırakın'
-                    : 'SMTP şifresini girin'
-                }
-                autoComplete="new-password"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Gönderen E-Posta Adresi *
-              </label>
-              <input
-                type="email"
-                required
-                value={smtpFromAddress}
-                onChange={(e) => setSmtpFromAddress(e.target.value)}
-                placeholder="Gönderen e-posta adresini girin"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Gönderen Adı
-              </label>
-              <input
-                type="text"
-                value={smtpFromName}
-                onChange={(e) => setSmtpFromName(e.target.value)}
-                placeholder="Tescom Fanvil Partner"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
-              />
+              {isAutoPort ? (
+                <div className="px-3.5 py-2.5 rounded-xl bg-sky-50 border border-sky-200 text-[#0284C7] text-xs font-bold">
+                  {numericPort === 465
+                    ? '465 → SSL/TLS (secure: true)'
+                    : `${numericPort} → STARTTLS (secure: false, requireTLS: true)`}
+                </div>
+              ) : (
+                <select
+                  value={smtpSecurity}
+                  onChange={(e) => setSmtpSecurity(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
+                >
+                  <option value="starttls">STARTTLS (secure: false, requireTLS: true)</option>
+                  <option value="tls">SSL/TLS (secure: true)</option>
+                </select>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="pt-2">
+        {verifyResult && (
+          <div
+            className={`p-3.5 rounded-xl border text-xs font-semibold ${
+              verifyResult.type === 'ok'
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                : 'bg-red-50 border-red-200 text-red-700'
+            }`}
+          >
+            {verifyResult.text}
+          </div>
+        )}
+
+        <div className="pt-2 flex flex-wrap items-center gap-3">
           <button
             type="submit"
             disabled={saving}
@@ -1358,19 +1473,28 @@ function MailSettingsView() {
           >
             {saving ? 'Kaydediliyor...' : 'Mail Ayarlarını Kaydet'}
           </button>
+
+          <button
+            type="button"
+            disabled={verifying}
+            onClick={handleVerifyConnection}
+            className="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold"
+          >
+            {verifying ? 'Test Ediliyor...' : 'Bağlantıyı Test Et (verify)'}
+          </button>
         </div>
       </form>
 
-      {/* Test Mail Card */}
+      {/* Test Mail Card (works with unsaved form values too) */}
       <form
         onSubmit={handleSendTest}
         className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-4"
       >
         <h3 className="text-base font-extrabold text-slate-900">
-          Test Maili Gönder (transporter.verify + Gerçek Gönderim)
+          Test Maili Gönder
         </h3>
         <p className="text-xs text-slate-500">
-          Kaydettiğiniz SMTP ayarlarını ve sunucu TLS sertifikasını doğrulayıp test e-postası gönderir.
+          Formdaki değerlerle (Kaydet yapmadan da test edebilirsiniz; şifre alanı boşsa kayıtlı şifre kullanılır) girilen adrese gerçek test maili gönderir.
         </p>
 
         {testResult && (
@@ -1400,10 +1524,87 @@ function MailSettingsView() {
             className="px-5 py-2.5 rounded-xl bg-[#0F172A] hover:bg-slate-800 disabled:opacity-60 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5"
           >
             <Send className="w-3.5 h-3.5" />
-            <span>{testing ? 'Doğrulanıyor ve Gönderiliyor...' : 'Test Maili Gönder'}</span>
+            <span>{testing ? 'Gönderiliyor...' : 'Test Maili Gönder'}</span>
           </button>
         </div>
       </form>
+
+      {/* Last 20 Delivery Attempts Table */}
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-extrabold text-slate-900">
+              Son 20 Gönderim Denemesi
+            </h3>
+            <p className="text-[11px] text-slate-500">
+              Outbox ve test gönderimlerinin zaman, alıcı, sonuç ve hata kodu geçmişi
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={loadMailSettings}
+            className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 inline-flex items-center gap-1"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Yenile</span>
+          </button>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase">
+                <th className="py-3 px-4">Zaman</th>
+                <th className="py-3 px-4">Alıcı</th>
+                <th className="py-3 px-4">Sonuç</th>
+                <th className="py-3 px-4">Hata Kodu / Detay</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {recentAttempts.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-8 text-center text-slate-500">
+                    Henüz gönderim denemesi kaydı bulunmuyor.
+                  </td>
+                </tr>
+              ) : (
+                recentAttempts.map((a) => (
+                  <tr key={a._id}>
+                    <td className="py-3 px-4 whitespace-nowrap text-slate-500">
+                      {formatDateTR(a.createdAt)}
+                    </td>
+                    <td className="py-3 px-4 font-semibold text-slate-900">
+                      {a.recipient}
+                      {a.refCode && (
+                        <span className="ml-2 px-1.5 py-0.5 rounded bg-slate-100 text-[10px] font-mono text-slate-600">
+                          {a.refCode}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                          a.status === 'sent'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-red-50 text-red-700 border-red-200'
+                        }`}
+                      >
+                        {a.status === 'sent' ? 'Başarılı ✓' : 'Hata'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-slate-700">
+                      <span className="font-mono font-bold text-[11px] mr-1.5">
+                        [{a.errorCode || '-'}]
+                      </span>
+                      <span>{a.errorMessage || ''}</span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

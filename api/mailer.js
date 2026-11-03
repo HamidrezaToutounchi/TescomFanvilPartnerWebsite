@@ -11,7 +11,7 @@ const REQUEST_TYPE_LABELS = {
   demo: '2-Wire / Teknik Demo Talebi'
 };
 
-// Pooled SMTP transporter cache (recreated automatically when settings change)
+// Pooled SMTP transporter cache (closed and recreated when settings change)
 let cachedTransporter = null;
 let cachedConfigSignature = '';
 
@@ -33,9 +33,25 @@ function isMailSettingsConfigured(settingsDoc) {
     settingsDoc.smtpHost &&
       settingsDoc.smtpPort &&
       settingsDoc.smtpFromAddress &&
-      settingsDoc.smtpUser &&
-      settingsDoc.smtpPassEnc
+      (settingsDoc.smtpUser || settingsDoc.smtpFromAddress) &&
+      (settingsDoc.smtpPassEnc || settingsDoc.plainPassword)
   );
+}
+
+function resolveSecurityForPort(port, explicitSecurity) {
+  const numPort = Number(port) || 587;
+  if (numPort === 465) {
+    return { secure: true, requireTLS: false, mode: 'tls' };
+  }
+  if (numPort === 587 || numPort === 25) {
+    return { secure: false, requireTLS: true, mode: 'starttls' };
+  }
+  const isTls = explicitSecurity === 'tls';
+  return {
+    secure: isTls,
+    requireTLS: !isTls,
+    mode: isTls ? 'tls' : 'starttls'
+  };
 }
 
 function classifySmtpError(err) {
@@ -44,7 +60,7 @@ function classifySmtpError(err) {
   const rawMsg = String(err?.response || err?.message || err || '');
   const lowerMsg = rawMsg.toLowerCase();
 
-  // 1. TLS / Certificate verification failure (rejectUnauthorized is strictly true)
+  // 1. Certificate verification error (rejectUnauthorized is never false)
   if (
     code.includes('CERT') ||
     code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' ||
@@ -57,32 +73,54 @@ function classifySmtpError(err) {
     lowerMsg.includes('altnames') ||
     lowerMsg.includes('self signed')
   ) {
-    const wrapped = new Error(`Sunucu sertifikası doğrulanamadı (${rawMsg.slice(0, 160)})`);
-    wrapped.permanent = false;
-    return wrapped;
-  }
-
-  // 2. Authentication error (535 / EAUTH)
-  if (responseCode === 535 || code === 'EAUTH' || /\b535\b/.test(rawMsg)) {
-    const wrapped = new Error(`Kullanıcı adı veya şifre hatalı (${rawMsg.slice(0, 160)})`);
-    wrapped.permanent = false;
-    return wrapped;
-  }
-
-  // 3. Permanent recipient / spam / policy rejection (550 / 554) -> DO NOT RETRY
-  if (
-    responseCode === 550 ||
-    responseCode === 554 ||
-    /\b(550|554)\b/.test(rawMsg)
-  ) {
-    const wrapped = new Error(
-      `Alıcı sunucu reddetti (SPF/DKIM veya spam filtresi) (${rawMsg.slice(0, 180)})`
-    );
+    const wrapped = new Error('Sunucu sertifikası doğrulanamadı');
+    wrapped.errorCode = code || 'TLS_CERT_ERROR';
     wrapped.permanent = true;
     return wrapped;
   }
 
-  // 4. Connection / timeout / DNS / firewall errors
+  // 2. Security mismatch: 530 / "must issue STARTTLS" / SSL wrong version number
+  if (
+    responseCode === 530 ||
+    /\b530\b/.test(rawMsg) ||
+    lowerMsg.includes('must issue a starttls') ||
+    lowerMsg.includes('must issue starttls') ||
+    lowerMsg.includes('starttls first') ||
+    lowerMsg.includes('wrong version number') ||
+    lowerMsg.includes('tls_validate_record_header')
+  ) {
+    const wrapped = new Error(
+      'Güvenlik ayarı uyumsuz; port 587 için STARTTLS, 465 için SSL seçin'
+    );
+    wrapped.errorCode = responseCode ? String(responseCode) : code || '530_STARTTLS';
+    wrapped.permanent = true;
+    return wrapped;
+  }
+
+  // 3. Authentication failure: 535 / EAUTH (permanent -> no automatic retry until settings fixed)
+  if (responseCode === 535 || code === 'EAUTH' || /\b535\b/.test(rawMsg)) {
+    const wrapped = new Error('Kullanıcı adı veya şifre hatalı');
+    wrapped.errorCode = responseCode ? `${responseCode} EAUTH` : 'EAUTH';
+    wrapped.permanent = true;
+    return wrapped;
+  }
+
+  // 4. Recipient / SPF / DKIM / spam rejection: 550 / 553 / 554 (permanent -> no retry)
+  if (
+    responseCode === 550 ||
+    responseCode === 553 ||
+    responseCode === 554 ||
+    /\b(550|553|554)\b/.test(rawMsg)
+  ) {
+    const matchedCode =
+      responseCode || (rawMsg.match(/\b(550|553|554)\b/) || [])[1] || '550';
+    const wrapped = new Error('Alıcı sunucu reddetti (SPF/DKIM veya spam filtresi)');
+    wrapped.errorCode = String(matchedCode);
+    wrapped.permanent = true;
+    return wrapped;
+  }
+
+  // 5. Connection / timeout / socket / firewall error (temporary -> retryable)
   if (
     code === 'ECONNECTION' ||
     code === 'ETIMEDOUT' ||
@@ -95,46 +133,93 @@ function classifySmtpError(err) {
     lowerMsg.includes('connection timeout') ||
     lowerMsg.includes('greeting never received')
   ) {
-    const wrapped = new Error(
-      `Sunucuya bağlanılamadı (port/host/firewall) (${rawMsg.slice(0, 160)})`
-    );
+    const wrapped = new Error('Sunucuya bağlanılamadı (host/port/firewall)');
+    wrapped.errorCode = code || 'ECONNECTION';
     wrapped.permanent = false;
     return wrapped;
   }
 
-  // 5. 4xx temporary SMTP errors (retryable)
+  // 6. 4xx temporary server error (retryable)
   if (
     (responseCode >= 400 && responseCode < 500) ||
     /\b4[0-9]{2}\b/.test(rawMsg)
   ) {
-    const wrapped = new Error(`Geçici SMTP sunucu hatası (4xx): ${rawMsg.slice(0, 200)}`);
+    const matched4xx =
+      responseCode || (rawMsg.match(/\b(4[0-9]{2})\b/) || [])[1] || '4XX';
+    const wrapped = new Error(`Geçici sunucu hatası (${matched4xx}): ${rawMsg.slice(0, 160)}`);
+    wrapped.errorCode = String(matched4xx);
     wrapped.permanent = false;
     return wrapped;
   }
 
-  const fallback = new Error(`SMTP gönderim hatası: ${rawMsg.slice(0, 220)}`);
+  const fallback = new Error(`SMTP gönderim hatası: ${rawMsg.slice(0, 200)}`);
+  fallback.errorCode = responseCode ? String(responseCode) : code || 'SMTP_ERROR';
   fallback.permanent = false;
   return fallback;
 }
 
-function getOrCreateTransporter(settingsDoc) {
+function buildTransportOptions(settingsDoc, usePool = true) {
   const host = (settingsDoc.smtpHost || 'mail.dogrumail.com').trim();
   const port = Number(settingsDoc.smtpPort) || 587;
-  const isImplicitTls = settingsDoc.smtpSecurity === 'tls' || port === 465;
-  const user = (settingsDoc.smtpUser || '').trim();
   const fromAddress = (settingsDoc.smtpFromAddress || '').trim();
+  const user = (settingsDoc.smtpUser || fromAddress).trim();
+  const sec = resolveSecurityForPort(port, settingsDoc.smtpSecurity);
 
-  if (!host || !port || !user || !settingsDoc.smtpPassEnc || !fromAddress) {
-    throw new Error(
-      'SMTP ayarları eksik (Host, Port, Kullanıcı Adı, Şifre ve Gönderen Adres zorunludur).'
+  const pass = settingsDoc.plainPassword
+    ? String(settingsDoc.plainPassword)
+    : settingsDoc.smtpPassEnc
+      ? decryptSecret(settingsDoc.smtpPassEnc)
+      : '';
+
+  if (!host || !port || !fromAddress || !user || !pass) {
+    const missingErr = new Error(
+      'SMTP ayarları eksik (E-posta adresi, Şifre, SMTP sunucu ve Port zorunludur).'
     );
+    missingErr.errorCode = 'CONFIG_MISSING';
+    missingErr.permanent = true;
+    throw missingErr;
   }
 
-  const pass = decryptSecret(settingsDoc.smtpPassEnc);
+  return {
+    host,
+    port,
+    user,
+    pass,
+    fromAddress,
+    sec,
+    transportConfig: {
+      ...(usePool
+        ? {
+            pool: true,
+            maxConnections: 1,
+            maxMessages: 50
+          }
+        : {}),
+      host,
+      port,
+      secure: sec.secure,
+      requireTLS: sec.requireTLS,
+      auth: { user, pass },
+      tls: {
+        minVersion: 'TLSv1.2',
+        servername: host
+      },
+      connectionTimeout: 15000,
+      greetingTimeout: 10000,
+      socketTimeout: 30000
+    }
+  };
+}
+
+function getOrCreatePooledTransporter(settingsDoc) {
+  const { host, port, user, pass, sec, transportConfig } = buildTransportOptions(
+    settingsDoc,
+    true
+  );
 
   const signature = crypto
     .createHash('sha256')
-    .update(`${host}:${port}:${isImplicitTls ? 'tls' : 'starttls'}:${user}:${pass}`)
+    .update(`${host}:${port}:${sec.mode}:${user}:${pass}`)
     .digest('hex');
 
   if (cachedTransporter && cachedConfigSignature === signature) {
@@ -142,51 +227,60 @@ function getOrCreateTransporter(settingsDoc) {
   }
 
   invalidateMailTransporter();
-
-  cachedTransporter = nodemailer.createTransport({
-    pool: true,
-    maxConnections: 1,
-    maxMessages: 50,
-    host,
-    port,
-    secure: isImplicitTls,
-    requireTLS: !isImplicitTls,
-    auth: { user, pass },
-    tls: {
-      minVersion: 'TLSv1.2',
-      servername: host
-    },
-    connectionTimeout: 15000,
-    greetingTimeout: 10000,
-    socketTimeout: 30000
-  });
-
+  cachedTransporter = nodemailer.createTransport(transportConfig);
   cachedConfigSignature = signature;
   return cachedTransporter;
+}
+
+async function verifySmtpConnection(settingsDoc) {
+  let tempTransporter = null;
+  try {
+    const { transportConfig, host, port, sec } = buildTransportOptions(settingsDoc, false);
+    tempTransporter = nodemailer.createTransport(transportConfig);
+    await tempTransporter.verify();
+    return {
+      ok: true,
+      host,
+      port,
+      security: sec.mode === 'tls' ? 'SSL/TLS (secure: true)' : 'STARTTLS (requireTLS: true)'
+    };
+  } catch (err) {
+    throw classifySmtpError(err);
+  } finally {
+    if (tempTransporter && typeof tempTransporter.close === 'function') {
+      try {
+        tempTransporter.close();
+      } catch (_e) {
+        // ignore
+      }
+    }
+  }
 }
 
 async function sendMailWithSettings(
   settingsDoc,
   { toAddresses, subject, html, text, replyTo },
-  options = { verifyFirst: false }
+  options = { ephemeral: false }
 ) {
   if (!settingsDoc) {
-    throw new Error('Mail ayarları henüz yapılandırılmamış.');
+    const err = new Error('Mail ayarları henüz yapılandırılmamış.');
+    err.errorCode = 'CONFIG_MISSING';
+    err.permanent = true;
+    throw err;
   }
 
   const fromAddress = (settingsDoc.smtpFromAddress || '').trim();
   const fromName = (settingsDoc.smtpFromName || 'Tescom Fanvil Partner').trim();
 
-  let transporter;
-  try {
-    transporter = getOrCreateTransporter(settingsDoc);
-  } catch (err) {
-    throw classifySmtpError(err);
-  }
+  let transporter = null;
+  const isEphemeral = Boolean(options && options.ephemeral);
 
   try {
-    if (options && options.verifyFirst) {
-      await transporter.verify();
+    if (isEphemeral) {
+      const { transportConfig } = buildTransportOptions(settingsDoc, false);
+      transporter = nodemailer.createTransport(transportConfig);
+    } else {
+      transporter = getOrCreatePooledTransporter(settingsDoc);
     }
 
     await transporter.sendMail({
@@ -197,14 +291,22 @@ async function sendMailWithSettings(
       text: text || subject,
       html,
       headers: {
-        'X-Auto-Response-Suppress': 'All',
-        'Auto-Submitted': 'auto-generated'
+        'Auto-Submitted': 'auto-generated',
+        'X-Auto-Response-Suppress': 'All'
       }
     });
 
-    return { ok: true };
+    return { ok: true, errorCode: '250 OK' };
   } catch (err) {
     throw classifySmtpError(err);
+  } finally {
+    if (isEphemeral && transporter && typeof transporter.close === 'function') {
+      try {
+        transporter.close();
+      } catch (_e) {
+        // ignore
+      }
+    }
   }
 }
 
@@ -329,6 +431,8 @@ function buildLeadNotificationContent(lead) {
 module.exports = {
   invalidateMailTransporter,
   isMailSettingsConfigured,
+  resolveSecurityForPort,
+  verifySmtpConnection,
   sendMailWithSettings,
   buildLeadNotificationContent
 };
