@@ -27,7 +27,10 @@ const {
   invalidateAllowedIpCache,
   requireAllowedIp
 } = require('./ipAllowlist');
-const { sendMailWithSettings } = require('./mailer');
+const {
+  invalidateMailTransporter,
+  sendMailWithSettings
+} = require('./mailer');
 const { enqueueLeadMailJob } = require('./outboxWorker');
 
 const router = express.Router();
@@ -49,29 +52,6 @@ async function writeAuditLog(req, action, details = '', explicitActor = null) {
     });
   } catch (err) {
     console.error('[ERROR] Failed to write audit log:', err.message);
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Helper: Compute Graph Secret Expiry Warning (within 30 days)
-// ---------------------------------------------------------------------------
-async function getSecretExpiryWarning() {
-  try {
-    const doc = await MailSettings.findOne({ key: 'default' }).lean();
-    if (!doc || !doc.secretExpiresAt) return null;
-    const expiresAt = new Date(doc.secretExpiresAt);
-    const diffMs = expiresAt.getTime() - Date.now();
-    const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-    if (daysLeft <= 30) {
-      return {
-        expiresAt: expiresAt.toISOString(),
-        daysLeft,
-        expired: daysLeft <= 0
-      };
-    }
-    return null;
-  } catch (_err) {
-    return null;
   }
 }
 
@@ -154,15 +134,13 @@ const loginRateLimiter = rateLimit({
 // ---------------------------------------------------------------------------
 // 4. Auth Endpoints
 // ---------------------------------------------------------------------------
-router.get('/me', async (req, res) => {
+router.get('/me', (req, res) => {
   const isAuthenticated = Boolean(req.session && req.session.adminUser);
-  const secretWarning = isAuthenticated ? await getSecretExpiryWarning() : null;
   return res.json({
     ok: true,
     authenticated: isAuthenticated,
     user: isAuthenticated ? req.session.adminUser : null,
-    clientIp: req.clientIpNormalized || req.ip,
-    secretExpiryWarning: secretWarning
+    clientIp: req.clientIpNormalized || req.ip
   });
 });
 
@@ -263,12 +241,10 @@ router.post('/login', loginRateLimiter, async (req, res) => {
         `Giriş başarılı (rol: ${user.role})`,
         user.username
       );
-      const secretWarning = await getSecretExpiryWarning();
       return res.json({
         ok: true,
         user: sessionUser,
-        clientIp: loginIp,
-        secretExpiryWarning: secretWarning
+        clientIp: loginIp
       });
     });
   } catch (err) {
@@ -627,55 +603,36 @@ router.post('/leads/:id/resend-mail', requireAdminRole, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// 6. Mail Settings Endpoints (role=admin ONLY)
+// 6. Mail Settings Endpoints (Doğru Mail SMTP - role=admin ONLY)
 // ---------------------------------------------------------------------------
 router.get('/mail-settings', requireAdminRole, async (_req, res) => {
   try {
     let doc = await MailSettings.findOne({ key: 'default' }).lean();
     if (!doc) {
       doc = {
-        mode: 'smtp',
-        tenantId: '',
-        clientId: '',
-        clientSecretEnc: '',
-        secretExpiresAt: null,
-        graphFromAddress: '',
-        graphFromName: 'Fanvil Gold Partner Portal',
         smtpHost: 'mail.dogrumail.com',
         smtpPort: 587,
         smtpSecurity: 'starttls',
         smtpUser: '',
         smtpPassEnc: '',
         smtpFromAddress: '',
-        smtpFromName: 'Fanvil Gold Partner Portal'
+        smtpFromName: 'Tescom Fanvil Partner'
       };
     }
-
-    const secretWarning = await getSecretExpiryWarning();
 
     return res.json({
       ok: true,
       settings: {
-        mode: doc.mode || 'smtp',
-        tenantId: doc.tenantId || '',
-        clientId: doc.clientId || '',
-        hasClientSecret: Boolean(doc.clientSecretEnc),
-        secretExpiresAt: doc.secretExpiresAt
-          ? new Date(doc.secretExpiresAt).toISOString().slice(0, 10)
-          : '',
-        graphFromAddress: doc.graphFromAddress || '',
-        graphFromName: doc.graphFromName || 'Fanvil Gold Partner Portal',
         smtpHost: doc.smtpHost || 'mail.dogrumail.com',
         smtpPort: doc.smtpPort || 587,
         smtpSecurity: doc.smtpSecurity || 'starttls',
         smtpUser: doc.smtpUser || '',
         hasSmtpPassword: Boolean(doc.smtpPassEnc),
         smtpFromAddress: doc.smtpFromAddress || '',
-        smtpFromName: doc.smtpFromName || 'Fanvil Gold Partner Portal',
+        smtpFromName: doc.smtpFromName || 'Tescom Fanvil Partner',
         updatedAt: doc.updatedAt || null,
         updatedBy: doc.updatedBy || ''
-      },
-      secretExpiryWarning: secretWarning
+      }
     });
   } catch (err) {
     console.error('[ERROR] GET /api/admin/mail-settings:', err);
@@ -685,20 +642,17 @@ router.get('/mail-settings', requireAdminRole, async (_req, res) => {
 
 const mailSettingsZodSchema = z
   .object({
-    mode: z.enum(['graph', 'smtp']),
-    tenantId: z.string().trim().max(120).optional().default(''),
-    clientId: z.string().trim().max(120).optional().default(''),
-    clientSecret: z.string().max(500).optional().default(''),
-    secretExpiresAt: z.string().trim().max(30).optional().default(''),
-    graphFromAddress: z.string().trim().max(254).optional().default(''),
-    graphFromName: z.string().trim().max(120).optional().default('Fanvil Gold Partner Portal'),
-    smtpHost: z.string().trim().max(254).optional().default('smtp.office365.com'),
-    smtpPort: z.number().int().min(1).max(65535).optional().default(587),
-    smtpSecurity: z.enum(['starttls', 'tls']).optional().default('starttls'),
-    smtpUser: z.string().trim().max(254).optional().default(''),
+    smtpHost: z.string().trim().min(1, 'SMTP Host zorunludur.').max(254).default('mail.dogrumail.com'),
+    smtpPort: z.number().int().min(1).max(65535).default(587),
+    smtpSecurity: z.enum(['starttls', 'tls']).default('starttls'),
+    smtpUser: z.string().trim().min(1, 'Kullanıcı adı zorunludur.').max(254),
     smtpPassword: z.string().max(500).optional().default(''),
-    smtpFromAddress: z.string().trim().max(254).optional().default(''),
-    smtpFromName: z.string().trim().max(120).optional().default('Fanvil Gold Partner Portal')
+    smtpFromAddress: z
+      .string()
+      .trim()
+      .email('Geçerli bir gönderen e-posta adresi giriniz.')
+      .max(254),
+    smtpFromName: z.string().trim().max(120).optional().default('Tescom Fanvil Partner')
   })
   .strict();
 
@@ -717,33 +671,25 @@ router.put('/mail-settings', requireAdminRole, async (req, res) => {
 
     const updateObj = {
       key: 'default',
-      mode: data.mode,
-      tenantId: data.tenantId,
-      clientId: data.clientId,
-      secretExpiresAt: data.secretExpiresAt ? new Date(data.secretExpiresAt) : null,
-      graphFromAddress: data.graphFromAddress,
-      graphFromName: data.graphFromName || 'Fanvil Gold Partner Portal',
-      smtpHost: data.smtpHost || 'smtp.office365.com',
+      smtpHost: data.smtpHost || 'mail.dogrumail.com',
       smtpPort: data.smtpPort || 587,
       smtpSecurity: data.smtpSecurity || 'starttls',
       smtpUser: data.smtpUser,
       smtpFromAddress: data.smtpFromAddress,
-      smtpFromName: data.smtpFromName || 'Fanvil Gold Partner Portal',
+      smtpFromName: data.smtpFromName || 'Tescom Fanvil Partner',
       updatedAt: new Date(),
       updatedBy: req.session.adminUser.username
     };
-
-    // Preserve existing encrypted secrets if password fields are left blank
-    if (data.clientSecret && data.clientSecret.trim() !== '') {
-      updateObj.clientSecretEnc = encryptSecret(data.clientSecret.trim());
-    } else if (existing?.clientSecretEnc) {
-      updateObj.clientSecretEnc = existing.clientSecretEnc;
-    }
 
     if (data.smtpPassword && data.smtpPassword.trim() !== '') {
       updateObj.smtpPassEnc = encryptSecret(data.smtpPassword.trim());
     } else if (existing?.smtpPassEnc) {
       updateObj.smtpPassEnc = existing.smtpPassEnc;
+    } else {
+      return res.status(400).json({
+        ok: false,
+        error: 'İlk kurulumda SMTP şifresi girilmesi zorunludur.'
+      });
     }
 
     await MailSettings.findOneAndUpdate(
@@ -752,19 +698,18 @@ router.put('/mail-settings', requireAdminRole, async (req, res) => {
       { upsert: true, new: true }
     );
 
+    // Close existing pooled SMTP transporter so next send uses the updated config
+    invalidateMailTransporter();
+
     await writeAuditLog(
       req,
       'mail_settings_updated',
-      `Mail ayarları güncellendi (Mod: ${data.mode}).`
+      `SMTP mail ayarları güncellendi (${updateObj.smtpHost}:${updateObj.smtpPort}, ${updateObj.smtpSecurity.toUpperCase()}).`
     );
-
-    const secretWarning = await getSecretExpiryWarning();
 
     return res.json({
       ok: true,
-      hasClientSecret: Boolean(updateObj.clientSecretEnc),
-      hasSmtpPassword: Boolean(updateObj.smtpPassEnc),
-      secretExpiryWarning: secretWarning
+      hasSmtpPassword: Boolean(updateObj.smtpPassEnc)
     });
   } catch (err) {
     console.error('[ERROR] PUT /api/admin/mail-settings:', err);
@@ -792,40 +737,41 @@ router.post('/mail-settings/test', requireAdminRole, async (req, res) => {
     }
 
     const settingsDoc = await MailSettings.findOne({ key: 'default' }).lean();
-    if (!settingsDoc) {
+    if (!settingsDoc || !settingsDoc.smtpPassEnc) {
       return res.status(400).json({
         ok: false,
-        error: 'Önce mail ayarlarını kaydedin.'
+        error: 'Önce SMTP mail ayarlarını ve şifreyi kaydedin.'
       });
     }
 
     const nowStr = new Date().toLocaleString('tr-TR', {
       timeZone: 'Europe/Istanbul'
     });
-    const modeLabel =
-      settingsDoc.mode === 'smtp'
-        ? 'SMTP (Nodemailer)'
-        : 'Microsoft 365 – Graph API';
 
-    await sendMailWithSettings(settingsDoc, {
-      toAddresses: [parsed.data.toEmail],
-      subject: `Fanvil Gold Partner Portal – Test Maili (${modeLabel})`,
-      text: `Bu e-posta Fanvil Gold Partner Admin Paneli üzerinden ${modeLabel} kullanılarak ${nowStr} tarihinde test amacıyla gönderilmiştir.`,
-      html: `<div style="font-family:Arial,sans-serif;padding:20px;border:1px solid #e2e8f0;border-radius:12px;">
-        <h3 style="color:#0f172a;margin-top:0;">Fanvil Gold Partner Portal – Test Maili Başarılı ✓</h3>
-        <p>Bu e-posta <strong>${escapeHtml(modeLabel)}</strong> yöntemiyle <strong>${escapeHtml(nowStr)}</strong> tarihinde başarıyla gönderilmiştir.</p>
-      </div>`
-    });
+    // Runs transporter.verify() + real test email send
+    await sendMailWithSettings(
+      settingsDoc,
+      {
+        toAddresses: [parsed.data.toEmail],
+        subject: `Tescom Fanvil Partner – SMTP Test Maili`,
+        text: `Bu e-posta Tescom Fanvil Partner Admin Paneli üzerinden Doğru Mail SMTP (${settingsDoc.smtpHost}:${settingsDoc.smtpPort}) kullanılarak ${nowStr} tarihinde test amacıyla gönderilmiştir.`,
+        html: `<div style="font-family:Arial,sans-serif;padding:20px;border:1px solid #e2e8f0;border-radius:12px;">
+          <h3 style="color:#0f172a;margin-top:0;">Tescom Fanvil Partner – SMTP Test Maili Başarılı ✓</h3>
+          <p>Bu e-posta <strong>${escapeHtml(settingsDoc.smtpHost)}:${escapeHtml(settingsDoc.smtpPort)} (${escapeHtml(String(settingsDoc.smtpSecurity || 'starttls').toUpperCase())})</strong> üzerinden <strong>${escapeHtml(nowStr)}</strong> tarihinde başarıyla doğrulanıp gönderilmiştir.</p>
+        </div>`
+      },
+      { verifyFirst: true }
+    );
 
     await writeAuditLog(
       req,
       'mail_test_sent',
-      `${parsed.data.toEmail} adresine test maili gönderildi (${settingsDoc.mode}).`
+      `${parsed.data.toEmail} adresine SMTP test maili gönderildi.`
     );
 
     return res.json({
       ok: true,
-      message: `Test e-postası (${modeLabel}) başarıyla ${parsed.data.toEmail} adresine gönderildi.`
+      message: `SMTP bağlantısı doğrulandı (verify) ve test e-postası başarıyla ${parsed.data.toEmail} adresine gönderildi.`
     });
   } catch (err) {
     console.error('[ERROR] POST /api/admin/mail-settings/test:', err.message);
@@ -839,10 +785,28 @@ router.post('/mail-settings/test', requireAdminRole, async (req, res) => {
 // ---------------------------------------------------------------------------
 // 7. Recipients Endpoints (role=admin ONLY)
 // ---------------------------------------------------------------------------
+function isSenderTicketAddress(emailLower, settingsDoc) {
+  const clean = String(emailLower || '').trim().toLowerCase();
+  if (!clean) return false;
+  if (clean.startsWith('support@')) return true;
+  const fromLower = String(settingsDoc?.smtpFromAddress || '').trim().toLowerCase();
+  const userLower = String(settingsDoc?.smtpUser || '').trim().toLowerCase();
+  if (fromLower && clean === fromLower) return true;
+  if (userLower && clean === userLower) return true;
+  return false;
+}
+
 router.get('/recipients', requireAdminRole, async (_req, res) => {
   try {
-    const items = await MailRecipient.find().sort({ createdAt: -1 }).lean();
-    return res.json({ ok: true, items });
+    const [items, settingsDoc] = await Promise.all([
+      MailRecipient.find().sort({ createdAt: -1 }).lean(),
+      MailSettings.findOne({ key: 'default' }).lean()
+    ]);
+    return res.json({
+      ok: true,
+      items,
+      senderAddress: settingsDoc?.smtpFromAddress || settingsDoc?.smtpUser || ''
+    });
   } catch (err) {
     console.error('[ERROR] GET /api/admin/recipients:', err);
     return res.status(500).json({ ok: false, error: 'Alıcı listesi alınamadı.' });
@@ -872,6 +836,15 @@ router.post('/recipients', requireAdminRole, async (req, res) => {
     }
 
     const emailLower = parsed.data.email.toLowerCase();
+    const settingsDoc = await MailSettings.findOne({ key: 'default' }).lean();
+
+    if (isSenderTicketAddress(emailLower, settingsDoc)) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Bu adres ticket sistemi tarafından okunuyor; her lead için ticket açılır.'
+      });
+    }
+
     const existing = await MailRecipient.findOne({ email: emailLower });
     if (existing) {
       return res.status(400).json({

@@ -12,7 +12,6 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@azure/msal-node": "^2.16.2",
     "bcryptjs": "^2.4.3",
     "connect-mongo": "^5.1.0",
     "cors": "^2.8.5",

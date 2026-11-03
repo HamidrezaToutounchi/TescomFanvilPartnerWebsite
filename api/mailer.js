@@ -2,7 +2,6 @@
 
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
-const { ConfidentialClientApplication } = require('@azure/msal-node');
 const { decryptSecret, escapeHtml } = require('./cryptoUtils');
 
 const REQUEST_TYPE_LABELS = {
@@ -12,190 +11,118 @@ const REQUEST_TYPE_LABELS = {
   demo: '2-Wire / Teknik Demo Talebi'
 };
 
-// Cache MSAL ConfidentialClientApplication & token in memory
-let cachedMsalKey = '';
-let cachedMsalClient = null;
-let cachedAccessToken = '';
-let cachedTokenExpiresAt = 0;
+// Pooled SMTP transporter cache (recreated automatically when settings change)
+let cachedTransporter = null;
+let cachedConfigSignature = '';
 
-function getMsalClient(tenantId, clientId, clientSecret) {
-  const sig = crypto
-    .createHash('sha256')
-    .update(`${tenantId}:${clientId}:${clientSecret}`)
-    .digest('hex');
-
-  if (cachedMsalClient && cachedMsalKey === sig) {
-    return cachedMsalClient;
-  }
-
-  cachedMsalClient = new ConfidentialClientApplication({
-    auth: {
-      clientId,
-      authority: `https://login.microsoftonline.com/${tenantId}`,
-      clientSecret
+function invalidateMailTransporter() {
+  if (cachedTransporter) {
+    try {
+      cachedTransporter.close();
+    } catch (_err) {
+      // ignore close error
     }
-  });
-  cachedMsalKey = sig;
-  cachedAccessToken = '';
-  cachedTokenExpiresAt = 0;
-  return cachedMsalClient;
-}
-
-async function acquireGraphToken(tenantId, clientId, clientSecret) {
-  const now = Date.now();
-  if (cachedAccessToken && cachedTokenExpiresAt - 60000 > now) {
-    return cachedAccessToken;
+    cachedTransporter = null;
+    cachedConfigSignature = '';
   }
-
-  const msalClient = getMsalClient(tenantId, clientId, clientSecret);
-  let result;
-  try {
-    result = await msalClient.acquireTokenByClientCredential({
-      scopes: ['https://graph.microsoft.com/.default']
-    });
-  } catch (err) {
-    const rawMsg = err?.message || String(err);
-    if (
-      rawMsg.includes('AADSTS700016') ||
-      rawMsg.includes('AADSTS7000215') ||
-      rawMsg.includes('invalid_client') ||
-      rawMsg.includes('unauthorized_client')
-    ) {
-      throw new Error(
-        `Entra ID kimlik doğrulama hatası: Tenant ID, Client ID veya Client Secret hatalı ya da süresi dolmuş. (${rawMsg.slice(0, 180)})`
-      );
-    }
-    throw new Error(`Microsoft Entra ID token alınamadı: ${rawMsg.slice(0, 220)}`);
-  }
-
-  if (!result || !result.accessToken) {
-    throw new Error('Microsoft Graph erişim anahtarı (accessToken) alınamadı.');
-  }
-
-  cachedAccessToken = result.accessToken;
-  cachedTokenExpiresAt = result.expiresOn
-    ? new Date(result.expiresOn).getTime()
-    : now + 50 * 60 * 1000;
-
-  return cachedAccessToken;
 }
 
 function isMailSettingsConfigured(settingsDoc) {
   if (!settingsDoc) return false;
-  if (settingsDoc.mode === 'smtp') {
-    return Boolean(
-      settingsDoc.smtpHost &&
-        settingsDoc.smtpPort &&
-        settingsDoc.smtpFromAddress &&
-        settingsDoc.smtpUser &&
-        settingsDoc.smtpPassEnc
-    );
-  }
-  // default mode === 'graph'
   return Boolean(
-    settingsDoc.tenantId &&
-      settingsDoc.clientId &&
-      settingsDoc.clientSecretEnc &&
-      settingsDoc.graphFromAddress
+    settingsDoc.smtpHost &&
+      settingsDoc.smtpPort &&
+      settingsDoc.smtpFromAddress &&
+      settingsDoc.smtpUser &&
+      settingsDoc.smtpPassEnc
   );
 }
 
-async function sendViaGraph(settingsDoc, { toAddresses, subject, html, replyTo }) {
-  const tenantId = (settingsDoc.tenantId || '').trim();
-  const clientId = (settingsDoc.clientId || '').trim();
-  const fromAddress = (settingsDoc.graphFromAddress || '').trim();
-  const fromName = (settingsDoc.graphFromName || 'Fanvil Gold Partner Portal').trim();
+function classifySmtpError(err) {
+  const code = String(err?.code || '').toUpperCase();
+  const responseCode = Number(err?.responseCode) || 0;
+  const rawMsg = String(err?.response || err?.message || err || '');
+  const lowerMsg = rawMsg.toLowerCase();
 
-  if (!tenantId || !clientId || !settingsDoc.clientSecretEnc || !fromAddress) {
-    throw new Error(
-      'Microsoft 365 Graph API ayarları eksik (Tenant ID, Client ID, Client Secret ve Gönderen Adres zorunludur).'
+  // 1. TLS / Certificate verification failure (rejectUnauthorized is strictly true)
+  if (
+    code.includes('CERT') ||
+    code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' ||
+    code === 'DEPTH_ZERO_SELF_SIGNED_CERT' ||
+    code === 'SELF_SIGNED_CERT_IN_CHAIN' ||
+    code === 'ERR_TLS_CERT_ALTNAME_INVALID' ||
+    code === 'UNABLE_TO_GET_ISSUER_CERT' ||
+    code === 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY' ||
+    lowerMsg.includes('certificate') ||
+    lowerMsg.includes('altnames') ||
+    lowerMsg.includes('self signed')
+  ) {
+    const wrapped = new Error(`Sunucu sertifikası doğrulanamadı (${rawMsg.slice(0, 160)})`);
+    wrapped.permanent = false;
+    return wrapped;
+  }
+
+  // 2. Authentication error (535 / EAUTH)
+  if (responseCode === 535 || code === 'EAUTH' || /\b535\b/.test(rawMsg)) {
+    const wrapped = new Error(`Kullanıcı adı veya şifre hatalı (${rawMsg.slice(0, 160)})`);
+    wrapped.permanent = false;
+    return wrapped;
+  }
+
+  // 3. Permanent recipient / spam / policy rejection (550 / 554) -> DO NOT RETRY
+  if (
+    responseCode === 550 ||
+    responseCode === 554 ||
+    /\b(550|554)\b/.test(rawMsg)
+  ) {
+    const wrapped = new Error(
+      `Alıcı sunucu reddetti (SPF/DKIM veya spam filtresi) (${rawMsg.slice(0, 180)})`
     );
+    wrapped.permanent = true;
+    return wrapped;
   }
 
-  const clientSecret = decryptSecret(settingsDoc.clientSecretEnc);
-  const accessToken = await acquireGraphToken(tenantId, clientId, clientSecret);
-
-  const endpoint = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(fromAddress)}/sendMail`;
-
-  const payload = {
-    message: {
-      subject,
-      body: {
-        contentType: 'HTML',
-        content: html
-      },
-      from: {
-        emailAddress: {
-          name: fromName,
-          address: fromAddress
-        }
-      },
-      toRecipients: toAddresses.map((addr) => ({
-        emailAddress: { address: addr }
-      })),
-      ...(replyTo
-        ? {
-            replyTo: [
-              {
-                emailAddress: { address: replyTo }
-              }
-            ]
-          }
-        : {})
-    },
-    saveToSentItems: true
-  };
-
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(payload)
-  });
-
-  if (response.status === 202 || response.ok) {
-    return { ok: true, mode: 'graph' };
-  }
-
-  let errBodyText = '';
-  try {
-    errBodyText = await response.text();
-  } catch (_e) {
-    errBodyText = '';
-  }
-
-  if (response.status === 401 || response.status === 403) {
-    throw new Error(
-      `Uygulama izni yok (${response.status}): Microsoft Graph > Application permission > Mail.Send + Admin Consent gerekli (veya ApplicationAccessPolicy bu gönderici adresine izin vermiyor). Detay: ${errBodyText.slice(0, 200)}`
+  // 4. Connection / timeout / DNS / firewall errors
+  if (
+    code === 'ECONNECTION' ||
+    code === 'ETIMEDOUT' ||
+    code === 'ESOCKET' ||
+    code === 'ENOTFOUND' ||
+    code === 'ECONNREFUSED' ||
+    code === 'EHOSTUNREACH' ||
+    lowerMsg.includes('etimedout') ||
+    lowerMsg.includes('econnrefused') ||
+    lowerMsg.includes('connection timeout') ||
+    lowerMsg.includes('greeting never received')
+  ) {
+    const wrapped = new Error(
+      `Sunucuya bağlanılamadı (port/host/firewall) (${rawMsg.slice(0, 160)})`
     );
+    wrapped.permanent = false;
+    return wrapped;
   }
 
-  if (response.status === 429 || response.status >= 500) {
-    const retryAfterHeader = response.headers.get('retry-after');
-    const retryAfterSeconds = retryAfterHeader ? parseInt(retryAfterHeader, 10) : null;
-    const retryErr = new Error(
-      `Microsoft Graph geçici hata döndü (HTTP ${response.status}). Outbox yeniden deneyecek. Detay: ${errBodyText.slice(0, 180)}`
-    );
-    if (retryAfterSeconds && Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
-      retryErr.retryAfterSeconds = retryAfterSeconds;
-    }
-    throw retryErr;
+  // 5. 4xx temporary SMTP errors (retryable)
+  if (
+    (responseCode >= 400 && responseCode < 500) ||
+    /\b4[0-9]{2}\b/.test(rawMsg)
+  ) {
+    const wrapped = new Error(`Geçici SMTP sunucu hatası (4xx): ${rawMsg.slice(0, 200)}`);
+    wrapped.permanent = false;
+    return wrapped;
   }
 
-  throw new Error(
-    `Microsoft Graph gönderim hatası (HTTP ${response.status}): ${errBodyText.slice(0, 240)}`
-  );
+  const fallback = new Error(`SMTP gönderim hatası: ${rawMsg.slice(0, 220)}`);
+  fallback.permanent = false;
+  return fallback;
 }
 
-async function sendViaSmtp(settingsDoc, { toAddresses, subject, html, text, replyTo }) {
+function getOrCreateTransporter(settingsDoc) {
   const host = (settingsDoc.smtpHost || 'mail.dogrumail.com').trim();
   const port = Number(settingsDoc.smtpPort) || 587;
   const isImplicitTls = settingsDoc.smtpSecurity === 'tls' || port === 465;
   const user = (settingsDoc.smtpUser || '').trim();
-  const fromAddress = (settingsDoc.smtpFromAddress || user).trim();
-  const fromName = (settingsDoc.smtpFromName || 'Fanvil Gold Partner Portal').trim();
+  const fromAddress = (settingsDoc.smtpFromAddress || '').trim();
 
   if (!host || !port || !user || !settingsDoc.smtpPassEnc || !fromAddress) {
     throw new Error(
@@ -205,54 +132,80 @@ async function sendViaSmtp(settingsDoc, { toAddresses, subject, html, text, repl
 
   const pass = decryptSecret(settingsDoc.smtpPassEnc);
 
-  const transporter = nodemailer.createTransport({
+  const signature = crypto
+    .createHash('sha256')
+    .update(`${host}:${port}:${isImplicitTls ? 'tls' : 'starttls'}:${user}:${pass}`)
+    .digest('hex');
+
+  if (cachedTransporter && cachedConfigSignature === signature) {
+    return cachedTransporter;
+  }
+
+  invalidateMailTransporter();
+
+  cachedTransporter = nodemailer.createTransport({
+    pool: true,
+    maxConnections: 1,
+    maxMessages: 50,
     host,
     port,
     secure: isImplicitTls,
-    requireTLS: !isImplicitTls && port === 587,
+    requireTLS: !isImplicitTls,
     auth: { user, pass },
     tls: {
       minVersion: 'TLSv1.2',
-      rejectUnauthorized: false
+      servername: host
     },
     connectionTimeout: 15000,
-    greetingTimeout: 15000,
-    socketTimeout: 20000
+    greetingTimeout: 10000,
+    socketTimeout: 30000
   });
 
+  cachedConfigSignature = signature;
+  return cachedTransporter;
+}
+
+async function sendMailWithSettings(
+  settingsDoc,
+  { toAddresses, subject, html, text, replyTo },
+  options = { verifyFirst: false }
+) {
+  if (!settingsDoc) {
+    throw new Error('Mail ayarları henüz yapılandırılmamış.');
+  }
+
+  const fromAddress = (settingsDoc.smtpFromAddress || '').trim();
+  const fromName = (settingsDoc.smtpFromName || 'Tescom Fanvil Partner').trim();
+
+  let transporter;
   try {
+    transporter = getOrCreateTransporter(settingsDoc);
+  } catch (err) {
+    throw classifySmtpError(err);
+  }
+
+  try {
+    if (options && options.verifyFirst) {
+      await transporter.verify();
+    }
+
     await transporter.sendMail({
       from: `"${fromName.replace(/"/g, '')}" <${fromAddress}>`,
       to: toAddresses.join(', '),
       ...(replyTo ? { replyTo } : {}),
       subject,
       text: text || subject,
-      html
+      html,
+      headers: {
+        'X-Auto-Response-Suppress': 'All',
+        'Auto-Submitted': 'auto-generated'
+      }
     });
-    return { ok: true, mode: 'smtp' };
-  } catch (err) {
-    const rawMsg = err?.message || String(err);
-    if (
-      rawMsg.includes('535 5.7.139') ||
-      rawMsg.includes('550 5.7.30') ||
-      rawMsg.includes('SmtpClientAuthenticationIsDisabled')
-    ) {
-      throw new Error(
-        `SMTP AUTH bu mailbox'ta kapalı veya Basic Auth engellenmiş (${rawMsg.slice(0, 140)}). Lütfen Microsoft 365 – Graph API modunu kullanın.`
-      );
-    }
-    throw new Error(`SMTP gönderim hatası: ${rawMsg.slice(0, 240)}`);
-  }
-}
 
-async function sendMailWithSettings(settingsDoc, messageOptions) {
-  if (!settingsDoc) {
-    throw new Error('Mail ayarları henüz yapılandırılmamış.');
+    return { ok: true };
+  } catch (err) {
+    throw classifySmtpError(err);
   }
-  if (settingsDoc.mode === 'smtp') {
-    return sendViaSmtp(settingsDoc, messageOptions);
-  }
-  return sendViaGraph(settingsDoc, messageOptions);
 }
 
 function buildLeadNotificationContent(lead) {
@@ -338,7 +291,7 @@ function buildLeadNotificationContent(lead) {
 <body style="font-family:Arial,Helvetica,sans-serif;background:#f8fafc;padding:24px;color:#0f172a;">
   <div style="max-width:680px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;">
     <div style="background:#0f172a;color:#ffffff;padding:18px 24px;border-bottom:3px solid #E60012;">
-      <div style="font-size:12px;color:#fca5a5;font-weight:bold;text-transform:uppercase;letter-spacing:0.6px;">Fanvil Gold Partner Portal</div>
+      <div style="font-size:12px;color:#fca5a5;font-weight:bold;text-transform:uppercase;letter-spacing:0.6px;">Tescom Fanvil Partner</div>
       <h2 style="margin:6px 0 0;font-size:18px;">Yeni Kurumsal Talep: ${escapeHtml(lead.refCode)}</h2>
     </div>
     <div style="padding:24px;">
@@ -374,6 +327,7 @@ function buildLeadNotificationContent(lead) {
 }
 
 module.exports = {
+  invalidateMailTransporter,
   isMailSettingsConfigured,
   sendMailWithSettings,
   buildLeadNotificationContent

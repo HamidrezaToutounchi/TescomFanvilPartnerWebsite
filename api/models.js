@@ -106,27 +106,17 @@ const adminUserSchema = new mongoose.Schema(
 );
 
 // 4. Mail Settings Collection ("mail_settings" - singleton document with key='default')
+// Doğru Mail SMTP (nodemailer) yapılandırması
 const mailSettingsSchema = new mongoose.Schema(
   {
     key: { type: String, required: true, unique: true, default: 'default' },
-    mode: { type: String, enum: ['graph', 'smtp'], default: 'smtp' },
-
-    // Microsoft 365 Graph API fields
-    tenantId: { type: String, default: '', maxlength: 120, trim: true },
-    clientId: { type: String, default: '', maxlength: 120, trim: true },
-    clientSecretEnc: { type: String, default: '' },
-    secretExpiresAt: { type: Date, default: null },
-    graphFromAddress: { type: String, default: '', maxlength: 254, trim: true },
-    graphFromName: { type: String, default: 'Fanvil Gold Partner Portal', maxlength: 120, trim: true },
-
-    // SMTP fields (Exchange / mail.dogrumail.com)
     smtpHost: { type: String, default: 'mail.dogrumail.com', maxlength: 254, trim: true },
     smtpPort: { type: Number, default: 587, min: 1, max: 65535 },
     smtpSecurity: { type: String, enum: ['starttls', 'tls'], default: 'starttls' },
     smtpUser: { type: String, default: '', maxlength: 254, trim: true },
     smtpPassEnc: { type: String, default: '' },
     smtpFromAddress: { type: String, default: '', maxlength: 254, trim: true },
-    smtpFromName: { type: String, default: 'Fanvil Gold Partner Portal', maxlength: 120, trim: true },
+    smtpFromName: { type: String, default: 'Tescom Fanvil Partner', maxlength: 120, trim: true },
 
     updatedAt: { type: Date, default: Date.now },
     updatedBy: { type: String, default: '' }

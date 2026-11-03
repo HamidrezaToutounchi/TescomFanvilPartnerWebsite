@@ -51,43 +51,12 @@ docker exec -it fanvil-api node scripts/create-admin.js admin
 
 ---
 
-## 3. Azure App Registration Kurulumu (Microsoft 365 – Graph API Mail Gönderimi)
+## 3. Mail Gönderim Notları (Doğru Mail SMTP)
 
-Exchange Online'da SMTP Basic Auth kapatıldığı için önerilen ve varsayılan gönderim yöntemi **Microsoft 365 – Graph API** modudur. Kurulum adımları:
-
-1. **Entra ID'de App Registration Oluşturun:**
-   - Microsoft Entra Admin Center (`entra.microsoft.com`) > **Identity** > **Applications** > **App registrations** > **New registration** adımına gidin.
-   - Uygulamaya bir ad verin (örn. `Fanvil-Portal-Mailer`), *Supported account types* olarak **Accounts in this organizational directory only (Single tenant)** seçip kaydedin.
-   - Genel bakış (Overview) ekranından **Application (client) ID** ve **Directory (tenant) ID** değerlerini not edin.
-
-2. **Microsoft Graph `Mail.Send` Uygulama İznini Ekleyin:**
-   - **API permissions** > **Add a permission** > **Microsoft Graph** > **Application permissions** seçin.
-   - Arama kutusuna `Mail.Send` yazıp seçin ve **Add permissions** butonuna tıklayın.
-
-3. **Admin Consent Verin:**
-   - API permissions sayfasında **Grant admin consent for [Organizasyon Adı]** butonuna tıklayıp onaylayın (`Status` sütununda yeşil onay işareti görünmelidir).
-
-4. **Client Secret Oluşturun ve Son Kullanma Tarihini Not Edin:**
-   - **Certificates & secrets** > **Client secrets** > **New client secret** adımına tıklayın.
-   - Açıklama ve süre seçip oluşturun. Oluşan **Value** değerini (Secret ID değil!) ve **Expires** (son kullanma) tarihini hemen kopyalayıp Admin Paneli > **Mail Ayarları** ekranına girin.
-
-5. **ÖNEMLİ — Gönderim Yetkisini Sadece İlgili Mailbox İle Kısıtlayın (Exchange Online PowerShell):**
-   - Kısıtlanmazsa `Mail.Send` uygulama izni organizasyondaki tüm şirket mailbox'ları adına gönderim yetkisi verir. Uygulamanın yalnızca gönderici adresiniz (örn. `support@...`) adına mail gönderebilmesi için Exchange Online PowerShell'de şu komutlarla kısıtlayın:
-   ```powershell
-   Connect-ExchangeOnline
-
-   # 1. Yalnızca ilgili gönderici posta kutusunu içeren bir Mail-Enabled Security Group oluşturun (veya mevcut grubu kullanın)
-   # 2. Uygulamayı yalnızca bu gruba kısıtlayın:
-   New-ApplicationAccessPolicy `
-     -AccessRight RestrictAccess `
-     -PolicyScopeGroupId "<sadece-gonderici-mailbox-iceren-security-group-adresi>" `
-     -AppId "<Application-Client-ID>" `
-     -Description "Fanvil Portal sadece ilgili destek mailbox adina mail gonderebilir"
-
-   # 3. Kısıtlamayı doğrulayın (Gönderici mailbox için 'Granted', diğer mailbox'lar için 'Denied' dönmelidir):
-   Test-ApplicationAccessPolicy -Identity "<gonderici-mailbox-adresi>" -AppId "<Application-Client-ID>"
-   Test-ApplicationAccessPolicy -Identity "<baska-bir-kullanici-adresi>" -AppId "<Application-Client-ID>"
-   ```
+- E-posta bildirimleri Admin Paneli > **Mail Ayarları** ekranından yapılandırılan **Doğru Mail SMTP** (`mail.dogrumail.com`, port `587` STARTTLS veya `465` SSL/TLS, `TLSv1.2+`, sertifika doğrulaması aktif) üzerinden gönderilir.
+- Kullanıcı adı, şifre ve gönderen adres bilgileri yalnızca yönetim panelinden girilir ve parola veritabanında **AES-256-GCM** ile şifrelenerek saklanır.
+- Gönderen adresin kendisi (ticket sistemi tarafından okunan adres) **Alıcılar** listesine eklenemez; her lead için döngüsel ticket açılmasını önlemek amacıyla panelde ve backend'de engellenmiştir.
+- **Önemli DNS / Teslimat Notu:** Mailler spama düşer veya bounce olursa `tescom.com.tr` için SPF kaydında Doğru Mail sunucusunun, DKIM'in ve PTR kaydının tanımlı olduğunu kontrol et.
 
 ---
 

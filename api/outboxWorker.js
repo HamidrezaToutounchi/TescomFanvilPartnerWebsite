@@ -2,6 +2,7 @@
 
 const { Lead, MailSettings, MailRecipient, MailJob } = require('./models');
 const {
+  invalidateMailTransporter,
   isMailSettingsConfigured,
   sendMailWithSettings,
   buildLeadNotificationContent
@@ -66,8 +67,20 @@ async function processSingleJob(job) {
     return;
   }
 
+  const senderAddrLower = String(settingsDoc.smtpFromAddress || settingsDoc.smtpUser || '')
+    .trim()
+    .toLowerCase();
+
   const activeRecipients = await MailRecipient.find({ active: true }).lean();
   const matchingRecipients = activeRecipients.filter((r) => {
+    const rEmail = String(r.email || '').trim().toLowerCase();
+    // Never send notification to the sender/ticket address itself
+    if (
+      (senderAddrLower && rEmail === senderAddrLower) ||
+      rEmail.startsWith('support@')
+    ) {
+      return false;
+    }
     if (!Array.isArray(r.requestTypes) || r.requestTypes.length === 0) {
       return true;
     }
@@ -112,7 +125,8 @@ async function processSingleJob(job) {
     const attemptNum = job.attempts + 1;
     const errorMsg = String(err?.message || err).slice(0, 1500);
 
-    if (attemptNum >= MAX_ATTEMPTS) {
+    // 550 / 554 permanent errors or max attempts reached -> mark failed immediately without retry
+    if (err?.permanent || attemptNum >= MAX_ATTEMPTS) {
       await MailJob.findByIdAndUpdate(job._id, {
         $set: {
           status: 'failed',
@@ -207,6 +221,7 @@ function stopOutboxWorker() {
     clearInterval(workerInterval);
     workerInterval = null;
   }
+  invalidateMailTransporter();
 }
 
 module.exports = {

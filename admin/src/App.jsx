@@ -83,7 +83,6 @@ export default function App() {
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [user, setUser] = useState(null);
   const [clientIp, setClientIp] = useState('');
-  const [secretWarning, setSecretWarning] = useState(null);
 
   // Navigation tab: 'leads' | 'mail' | 'recipients' | 'ips' | 'users' | 'audit'
   const [activeTab, setActiveTab] = useState('leads');
@@ -106,7 +105,6 @@ export default function App() {
         setClientIp(data.clientIp || '');
         if (data.authenticated && data.user) {
           setUser(data.user);
-          setSecretWarning(data.secretExpiryWarning || null);
         } else {
           setUser(null);
         }
@@ -138,7 +136,6 @@ export default function App() {
       }
       setUser(data.user);
       setClientIp(data.clientIp || clientIp);
-      setSecretWarning(data.secretExpiryWarning || null);
       setLoginPassword('');
     } catch (_err) {
       setLoginError('Sunucu bağlantı hatası.');
@@ -255,24 +252,6 @@ export default function App() {
   // -------------------------------------------------------------------------
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
-      {/* Graph Client Secret Expiry Warning Banner (<= 30 days) */}
-      {secretWarning && (
-        <div
-          className={`px-4 py-2.5 text-xs font-bold flex items-center justify-center gap-2 ${
-            secretWarning.expired
-              ? 'bg-red-600 text-white'
-              : 'bg-amber-400 text-slate-950'
-          }`}
-        >
-          <AlertTriangle className="w-4 h-4 shrink-0" />
-          <span>
-            {secretWarning.expired
-              ? `DİKKAT: Microsoft 365 Graph API Client Secret süresi dolmuş! (${secretWarning.expiresAt.slice(0, 10)}) Lütfen Entra ID'den yeni secret üretip Mail Ayarları sayfasından güncelleyin.`
-              : `UYARI: Microsoft 365 Graph API Client Secret süresinin dolmasına ${secretWarning.daysLeft} gün kaldı (${secretWarning.expiresAt.slice(0, 10)}).`}
-          </span>
-        </div>
-      )}
-
       {/* Top Navigation Header */}
       <header className="bg-[#0F172A] text-white border-b border-slate-800 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
@@ -423,9 +402,7 @@ export default function App() {
             />
           ))}
 
-        {isAdmin && activeTab === 'mail' && (
-          <MailSettingsView onSecretWarningChange={setSecretWarning} />
-        )}
+        {isAdmin && activeTab === 'mail' && <MailSettingsView />}
         {isAdmin && activeTab === 'recipients' && <RecipientsView />}
         {isAdmin && activeTab === 'ips' && <AllowedIpsView currentIp={clientIp} />}
         {isAdmin && activeTab === 'users' && <AdminUsersView currentUser={user} />}
@@ -1129,9 +1106,9 @@ function LeadDetailView({ leadId, isAdmin, onBack }) {
 }
 
 // ===========================================================================
-// SCREEN 5: DUAL-MODE MAIL SETTINGS (GRAPH API + SMTP) & TEST EMAIL
+// SCREEN 5: DOĞRU MAİL SMTP SETTINGS & TEST EMAIL
 // ===========================================================================
-function MailSettingsView({ onSecretWarningChange }) {
+function MailSettingsView() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -1139,23 +1116,14 @@ function MailSettingsView({ onSecretWarningChange }) {
   const [testToEmail, setTestToEmail] = useState('');
   const [testResult, setTestResult] = useState(null);
 
-  const [mode, setMode] = useState('smtp');
-  const [tenantId, setTenantId] = useState('');
-  const [clientId, setClientId] = useState('');
-  const [clientSecret, setClientSecret] = useState('');
-  const [hasClientSecret, setHasClientSecret] = useState(false);
-  const [secretExpiresAt, setSecretExpiresAt] = useState('');
-  const [graphFromAddress, setGraphFromAddress] = useState('support@tescom.com');
-  const [graphFromName, setGraphFromName] = useState('Fanvil Gold Partner Portal');
-
   const [smtpHost, setSmtpHost] = useState('mail.dogrumail.com');
   const [smtpPort, setSmtpPort] = useState(587);
   const [smtpSecurity, setSmtpSecurity] = useState('starttls');
-  const [smtpUser, setSmtpUser] = useState('support@tescom.com');
+  const [smtpUser, setSmtpUser] = useState('');
   const [smtpPassword, setSmtpPassword] = useState('');
   const [hasSmtpPassword, setHasSmtpPassword] = useState(false);
-  const [smtpFromAddress, setSmtpFromAddress] = useState('support@tescom.com');
-  const [smtpFromName, setSmtpFromName] = useState('Fanvil Gold Partner Portal');
+  const [smtpFromAddress, setSmtpFromAddress] = useState('');
+  const [smtpFromName, setSmtpFromName] = useState('Tescom Fanvil Partner');
 
   useEffect(() => {
     (async () => {
@@ -1164,29 +1132,19 @@ function MailSettingsView({ onSecretWarningChange }) {
         const { res, data } = await apiFetch('/api/admin/mail-settings');
         if (res.ok && data?.ok && data.settings) {
           const s = data.settings;
-          setMode(s.mode || 'smtp');
-          setTenantId(s.tenantId || '');
-          setClientId(s.clientId || '');
-          setHasClientSecret(Boolean(s.hasClientSecret));
-          setSecretExpiresAt(s.secretExpiresAt || '');
-          setGraphFromAddress(s.graphFromAddress || 'support@tescom.com');
-          setGraphFromName(s.graphFromName || 'Fanvil Gold Partner Portal');
           setSmtpHost(s.smtpHost || 'mail.dogrumail.com');
           setSmtpPort(s.smtpPort || 587);
           setSmtpSecurity(s.smtpSecurity || 'starttls');
-          setSmtpUser(s.smtpUser || 'support@tescom.com');
+          setSmtpUser(s.smtpUser || '');
           setHasSmtpPassword(Boolean(s.hasSmtpPassword));
-          setSmtpFromAddress(s.smtpFromAddress || 'support@tescom.com');
-          setSmtpFromName(s.smtpFromName || 'Fanvil Gold Partner Portal');
-          if (onSecretWarningChange) {
-            onSecretWarningChange(data.secretExpiryWarning || null);
-          }
+          setSmtpFromAddress(s.smtpFromAddress || '');
+          setSmtpFromName(s.smtpFromName || 'Tescom Fanvil Partner');
         }
       } finally {
         setLoading(false);
       }
     })();
-  }, [onSecretWarningChange]);
+  }, []);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -1196,13 +1154,6 @@ function MailSettingsView({ onSecretWarningChange }) {
       const { res, data } = await apiFetch('/api/admin/mail-settings', {
         method: 'PUT',
         body: JSON.stringify({
-          mode,
-          tenantId,
-          clientId,
-          clientSecret,
-          secretExpiresAt,
-          graphFromAddress,
-          graphFromName,
           smtpHost,
           smtpPort: Number(smtpPort) || 587,
           smtpSecurity,
@@ -1216,14 +1167,9 @@ function MailSettingsView({ onSecretWarningChange }) {
         setMessage({ type: 'error', text: data?.error || 'Ayarlar kaydedilemedi.' });
         return;
       }
-      setHasClientSecret(Boolean(data.hasClientSecret));
       setHasSmtpPassword(Boolean(data.hasSmtpPassword));
-      setClientSecret('');
       setSmtpPassword('');
-      if (onSecretWarningChange) {
-        onSecretWarningChange(data.secretExpiryWarning || null);
-      }
-      setMessage({ type: 'ok', text: 'Mail ayarları AES-256-GCM ile şifrelenerek kaydedildi.' });
+      setMessage({ type: 'ok', text: 'SMTP mail ayarları AES-256-GCM ile şifrelenerek kaydedildi.' });
     } finally {
       setSaving(false);
     }
@@ -1257,10 +1203,10 @@ function MailSettingsView({ onSecretWarningChange }) {
     <div className="max-w-4xl space-y-6">
       <div>
         <h1 className="text-2xl font-extrabold text-slate-900">
-          Mail Gönderim Ayarları (Microsoft Exchange)
+          Mail Gönderim Ayarları (Doğru Mail SMTP)
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Sırlar ve parolalar veritabanında AES-256-GCM ile şifreli saklanır ve hiçbir zaman geri gösterilmez.
+          SMTP parolası veritabanında AES-256-GCM ile şifreli saklanır ve hiçbir zaman geri gösterilmez.
         </p>
       </div>
 
@@ -1285,276 +1231,124 @@ function MailSettingsView({ onSecretWarningChange }) {
         onSubmit={handleSave}
         className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6"
       >
-        {/* Mode Selector */}
-        <div>
-          <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-500 mb-2">
-            Gönderim Yöntemi Seçin
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setMode('graph')}
-              className={`p-4 rounded-2xl border text-left transition-all ${
-                mode === 'graph'
-                  ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-sm'
-                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              <div className="text-xs font-extrabold">
-                1. Microsoft 365 – Graph API (Önerilen, Varsayılan)
-              </div>
-              <div
-                className={`text-[11px] mt-1 ${
-                  mode === 'graph' ? 'text-slate-300' : 'text-slate-500'
-                }`}
-              >
-                OAuth 2.0 Client Credentials (@azure/msal-node) ile güvenli gönderim
-              </div>
-            </button>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                SMTP Host *
+              </label>
+              <input
+                type="text"
+                required
+                value={smtpHost}
+                onChange={(e) => setSmtpHost(e.target.value)}
+                placeholder="mail.dogrumail.com"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
+              />
+            </div>
 
-            <button
-              type="button"
-              onClick={() => setMode('smtp')}
-              className={`p-4 rounded-2xl border text-left transition-all ${
-                mode === 'smtp'
-                  ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-sm'
-                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              <div className="text-xs font-extrabold">
-                2. SMTP (Yedek / On-Prem Exchange)
-              </div>
-              <div
-                className={`text-[11px] mt-1 ${
-                  mode === 'smtp' ? 'text-slate-300' : 'text-slate-500'
-                }`}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Port *
+              </label>
+              <input
+                type="number"
+                required
+                value={smtpPort}
+                onChange={(e) => setSmtpPort(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Güvenlik
+              </label>
+              <select
+                value={smtpSecurity}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setSmtpSecurity(v);
+                  setSmtpPort(v === 'tls' ? 465 : 587);
+                }}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
               >
-                Nodemailer STARTTLS (587) / SSL-TLS (465)
+                <option value="starttls">STARTTLS (587)</option>
+                <option value="tls">SSL / TLS (465)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                SMTP Kullanıcı Adı *
+              </label>
+              <input
+                type="text"
+                required
+                value={smtpUser}
+                onChange={(e) => setSmtpUser(e.target.value)}
+                placeholder="Gönderen kullanıcı adını girin"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-bold text-slate-700">
+                  SMTP Şifresi *
+                </label>
+                {hasSmtpPassword && (
+                  <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                    kayıtlı ✓
+                  </span>
+                )}
               </div>
-            </button>
+              <input
+                type="password"
+                value={smtpPassword}
+                onChange={(e) => setSmtpPassword(e.target.value)}
+                placeholder={
+                  hasSmtpPassword
+                    ? 'Değiştirmek istemiyorsanız boş bırakın'
+                    : 'SMTP şifresini girin'
+                }
+                autoComplete="new-password"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Gönderen E-Posta Adresi *
+              </label>
+              <input
+                type="email"
+                required
+                value={smtpFromAddress}
+                onChange={(e) => setSmtpFromAddress(e.target.value)}
+                placeholder="Gönderen e-posta adresini girin"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Gönderen Adı
+              </label>
+              <input
+                type="text"
+                value={smtpFromName}
+                onChange={(e) => setSmtpFromName(e.target.value)}
+                placeholder="Tescom Fanvil Partner"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
+              />
+            </div>
           </div>
         </div>
-
-        {mode === 'graph' ? (
-          <div className="space-y-4 pt-2 border-t border-slate-100">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Directory (Tenant) ID *
-                </label>
-                <input
-                  type="text"
-                  value={tenantId}
-                  onChange={(e) => setTenantId(e.target.value)}
-                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Application (Client) ID *
-                </label>
-                <input
-                  type="text"
-                  value={clientId}
-                  onChange={(e) => setClientId(e.target.value)}
-                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-bold text-slate-700">
-                    Client Secret (Value) *
-                  </label>
-                  {hasClientSecret && (
-                    <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
-                      kayıtlı ✓
-                    </span>
-                  )}
-                </div>
-                <input
-                  type="password"
-                  value={clientSecret}
-                  onChange={(e) => setClientSecret(e.target.value)}
-                  placeholder={
-                    hasClientSecret
-                      ? 'Değiştirmek istemiyorsanız boş bırakın'
-                      : 'Client Secret Value girin'
-                  }
-                  autoComplete="new-password"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Secret Son Kullanma Tarihi (30 Gün Kala Uyarı Verir)
-                </label>
-                <input
-                  type="date"
-                  value={secretExpiresAt}
-                  onChange={(e) => setSecretExpiresAt(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Gönderen E-Posta Adresi *
-                </label>
-                <input
-                  type="email"
-                  value={graphFromAddress}
-                  onChange={(e) => setGraphFromAddress(e.target.value)}
-                  placeholder="support@tescom.com"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Gönderen Adı
-                </label>
-                <input
-                  type="text"
-                  value={graphFromName}
-                  onChange={(e) => setGraphFromName(e.target.value)}
-                  placeholder="Fanvil Gold Partner Portal"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
-                />
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4 pt-2 border-t border-slate-100">
-            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-              <span>
-                Exchange Online'da Basic Auth Aralık 2026 sonunda varsayılan olarak kapanıyor; Graph modunu kullanın.
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  SMTP Host *
-                </label>
-                <input
-                  type="text"
-                  value={smtpHost}
-                  onChange={(e) => setSmtpHost(e.target.value)}
-                  placeholder="smtp.office365.com"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Port *
-                </label>
-                <input
-                  type="number"
-                  value={smtpPort}
-                  onChange={(e) => setSmtpPort(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Güvenlik
-                </label>
-                <select
-                  value={smtpSecurity}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setSmtpSecurity(v);
-                    setSmtpPort(v === 'tls' ? 465 : 587);
-                  }}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
-                >
-                  <option value="starttls">STARTTLS (587)</option>
-                  <option value="tls">SSL / TLS (465)</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  SMTP Kullanıcı Adı *
-                </label>
-                <input
-                  type="text"
-                  value={smtpUser}
-                  onChange={(e) => setSmtpUser(e.target.value)}
-                  placeholder="support@tescom.com"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-bold text-slate-700">
-                    SMTP Şifresi *
-                  </label>
-                  {hasSmtpPassword && (
-                    <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
-                      kayıtlı ✓
-                    </span>
-                  )}
-                </div>
-                <input
-                  type="password"
-                  value={smtpPassword}
-                  onChange={(e) => setSmtpPassword(e.target.value)}
-                  placeholder={
-                    hasSmtpPassword
-                      ? 'Değiştirmek istemiyorsanız boş bırakın'
-                      : 'SMTP şifresini girin'
-                  }
-                  autoComplete="new-password"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Gönderen E-Posta Adresi *
-                </label>
-                <input
-                  type="email"
-                  value={smtpFromAddress}
-                  onChange={(e) => setSmtpFromAddress(e.target.value)}
-                  placeholder="support@tescom.com"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Gönderen Adı
-                </label>
-                <input
-                  type="text"
-                  value={smtpFromName}
-                  onChange={(e) => setSmtpFromName(e.target.value)}
-                  placeholder="Fanvil Gold Partner Portal"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
-                />
-              </div>
-            </div>
-          </div>
-        )}
 
         <div className="pt-2">
           <button
@@ -1573,10 +1367,10 @@ function MailSettingsView({ onSecretWarningChange }) {
         className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-4"
       >
         <h3 className="text-base font-extrabold text-slate-900">
-          Test Maili Gönder ({mode === 'graph' ? 'Microsoft 365 Graph API' : 'SMTP'})
+          Test Maili Gönder (transporter.verify + Gerçek Gönderim)
         </h3>
         <p className="text-xs text-slate-500">
-          Kaydettiğiniz ayarları doğrulamak için bir alıcı adresi girip test e-postası gönderin.
+          Kaydettiğiniz SMTP ayarlarını ve sunucu TLS sertifikasını doğrulayıp test e-postası gönderir.
         </p>
 
         {testResult && (
@@ -1597,7 +1391,7 @@ function MailSettingsView({ onSecretWarningChange }) {
             required
             value={testToEmail}
             onChange={(e) => setTestToEmail(e.target.value)}
-            placeholder="test-alici@tescom.com.tr"
+            placeholder="Test alıcı e-posta adresini girin"
             className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs"
           />
           <button
@@ -1606,7 +1400,7 @@ function MailSettingsView({ onSecretWarningChange }) {
             className="px-5 py-2.5 rounded-xl bg-[#0F172A] hover:bg-slate-800 disabled:opacity-60 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5"
           >
             <Send className="w-3.5 h-3.5" />
-            <span>{testing ? 'Gönderiliyor...' : 'Test Maili Gönder'}</span>
+            <span>{testing ? 'Doğrulanıyor ve Gönderiliyor...' : 'Test Maili Gönder'}</span>
           </button>
         </div>
       </form>
@@ -1619,6 +1413,7 @@ function MailSettingsView({ onSecretWarningChange }) {
 // ===========================================================================
 function RecipientsView() {
   const [items, setItems] = useState([]);
+  const [senderAddress, setSenderAddress] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [requestTypes, setRequestTypes] = useState([]);
@@ -1628,6 +1423,9 @@ function RecipientsView() {
     const { res, data } = await apiFetch('/api/admin/recipients');
     if (res.ok && data?.ok) {
       setItems(data.items || []);
+      if (data.senderAddress) {
+        setSenderAddress(String(data.senderAddress).toLowerCase());
+      }
     }
   }, []);
 
@@ -1644,6 +1442,16 @@ function RecipientsView() {
   const handleAdd = async (e) => {
     e.preventDefault();
     setError('');
+    const candidateEmail = email.trim().toLowerCase();
+
+    if (
+      candidateEmail.startsWith('support@') ||
+      (senderAddress && candidateEmail === senderAddress)
+    ) {
+      setError('Bu adres ticket sistemi tarafından okunuyor; her lead için ticket açılır.');
+      return;
+    }
+
     const { res, data } = await apiFetch('/api/admin/recipients', {
       method: 'POST',
       body: JSON.stringify({
