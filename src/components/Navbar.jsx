@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   PhoneCall,
   ChevronDown,
@@ -14,7 +14,8 @@ import {
   Volume2,
   Phone,
   ArrowRight,
-  Award
+  Award,
+  Home
 } from 'lucide-react';
 import { FanvilLogo, FanvilGoldPartnerBadge } from './BrandLogos';
 
@@ -81,28 +82,61 @@ const MEGA_MENU_COLUMNS = [
 ];
 
 export default function Navbar({
+  currentPage,
+  onNavigatePage,
   totalProductCount,
   cartCount,
   compareCount,
-  onOpenCart,
-  onOpenCompare,
   onSelectCategory,
-  onScrollToSection,
-  onScrollToForm
+  onNavigateToForm
 }) {
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSubmenuOpen, setMobileSubmenuOpen] = useState(false);
+  const closeTimeoutRef = useRef(null);
 
-  const handleMegaItemSelect = (categoryKey, seriesQuery) => {
-    onSelectCategory(categoryKey, seriesQuery);
-    setMegaMenuOpen(false);
-    setMobileMenuOpen(false);
-    onScrollToSection('katalog');
+  const openMegaMenu = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setMegaMenuOpen(true);
   };
 
+  const scheduleCloseMegaMenu = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+    }
+    closeTimeoutRef.current = setTimeout(() => {
+      setMegaMenuOpen(false);
+    }, 240);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
+  }, []);
+
+  const handleMegaItemSelect = (categoryKey, seriesQuery) => {
+    if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    setMegaMenuOpen(false);
+    setMobileMenuOpen(false);
+    onSelectCategory(categoryKey, seriesQuery);
+  };
+
+  const navLinkClass = (pageId) =>
+    `px-3 py-2 rounded-xl text-[13px] xl:text-sm font-bold transition-colors whitespace-nowrap ${
+      currentPage === pageId
+        ? 'text-[#E60012] bg-red-50/80'
+        : 'text-slate-700 hover:text-[#E60012] hover:bg-slate-50'
+    }`;
+
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
+    <header
+      className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm"
+      onMouseLeave={scheduleCloseMegaMenu}
+    >
       {/* Top Corporate Bar */}
       <div className="bg-[#0F172A] text-slate-300 text-xs py-2 px-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
@@ -119,7 +153,7 @@ export default function Navbar({
           <div className="flex items-center gap-4 shrink-0 ml-auto">
             <button
               type="button"
-              onClick={() => onScrollToForm('proje')}
+              onClick={() => onNavigateToForm('proje')}
               className="hover:text-amber-300 transition-colors font-medium hidden sm:inline-flex items-center gap-1 whitespace-nowrap"
             >
               <Sparkles className="w-3 h-3 text-amber-400" />
@@ -128,7 +162,7 @@ export default function Navbar({
             <span className="hidden sm:inline text-slate-600">|</span>
             <button
               type="button"
-              onClick={() => onScrollToForm('bilgi')}
+              onClick={() => onNavigateToForm('bilgi')}
               className="inline-flex items-center gap-1.5 text-white font-semibold hover:text-amber-300 transition-colors whitespace-nowrap"
             >
               <PhoneCall className="w-3.5 h-3.5 text-[#E60012]" />
@@ -143,30 +177,58 @@ export default function Navbar({
         <div className="flex items-center justify-between h-20 gap-2 xl:gap-4">
           {/* Left: Official Fanvil Logo + Gold Partner Badge */}
           <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
-            <a
-              href="#"
+            <button
+              type="button"
+              onClick={() => {
+                setMegaMenuOpen(false);
+                onNavigatePage('home');
+              }}
               className="flex items-center focus:outline-none shrink-0"
               aria-label="Fanvil Partner Ana Sayfa"
             >
               <FanvilLogo className="h-7 sm:h-8 md:h-9" />
-            </a>
+            </button>
             <div className="hidden sm:block h-7 w-[1px] bg-slate-200 shrink-0" />
-            <div className="hidden sm:block shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setMegaMenuOpen(false);
+                onNavigatePage('gold-partner');
+              }}
+              className="hidden sm:block shrink-0 text-left"
+            >
               <FanvilGoldPartnerBadge size="sm" />
-            </div>
+            </button>
           </div>
 
-          {/* Center: Desktop Navigation Links (No Text Wrapping!) */}
-          <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 shrink-0">
+          {/* Center: Desktop Navigation Links (Multi-Page + Hover-Safe Mega Menu) */}
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 shrink-0 h-full">
+            <button
+              type="button"
+              onMouseEnter={() => setMegaMenuOpen(false)}
+              onClick={() => onNavigatePage('home')}
+              className={navLinkClass('home')}
+            >
+              Ana Sayfa
+            </button>
+
+            {/* Mega Menu Trigger wraps full height of navbar so there is zero dead gap */}
             <div
-              className="relative"
-              onMouseEnter={() => setMegaMenuOpen(true)}
-              onMouseLeave={() => setMegaMenuOpen(false)}
+              className="relative h-full flex items-center"
+              onMouseEnter={openMegaMenu}
+              onMouseLeave={scheduleCloseMegaMenu}
             >
               <button
                 type="button"
-                onClick={() => setMegaMenuOpen(!megaMenuOpen)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] xl:text-sm font-bold text-slate-700 hover:text-[#E60012] hover:bg-slate-50 transition-colors whitespace-nowrap"
+                onClick={() => {
+                  setMegaMenuOpen(false);
+                  onSelectCategory('Tümü', 'Tümü');
+                }}
+                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] xl:text-sm font-bold transition-colors whitespace-nowrap ${
+                  currentPage === 'urunler' || megaMenuOpen
+                    ? 'text-[#E60012] bg-red-50/80'
+                    : 'text-slate-700 hover:text-[#E60012] hover:bg-slate-50'
+                }`}
               >
                 <span>Ürün Kataloğu ({totalProductCount})</span>
                 <ChevronDown
@@ -179,37 +241,47 @@ export default function Navbar({
 
             <button
               type="button"
-              onClick={() => onScrollToSection('cozumler')}
-              className="px-3 py-2 rounded-xl text-[13px] xl:text-sm font-bold text-slate-700 hover:text-[#E60012] hover:bg-slate-50 transition-colors whitespace-nowrap"
+              onMouseEnter={() => setMegaMenuOpen(false)}
+              onClick={() => onNavigatePage('cozumler')}
+              className={navLinkClass('cozumler')}
             >
               Sektörel Çözümler
             </button>
 
             <button
               type="button"
-              onClick={() => onScrollToSection('gold-partner')}
-              className="px-3 py-2 rounded-xl text-[13px] xl:text-sm font-bold text-slate-700 hover:text-[#E60012] hover:bg-slate-50 transition-colors whitespace-nowrap"
+              onMouseEnter={() => setMegaMenuOpen(false)}
+              onClick={() => onNavigatePage('gold-partner')}
+              className={navLinkClass('gold-partner')}
             >
               Gold Partner
             </button>
 
             <button
               type="button"
-              onClick={() => onScrollToForm('bilgi')}
-              className="px-3 py-2 rounded-xl text-[13px] xl:text-sm font-bold text-slate-700 hover:text-[#E60012] hover:bg-slate-50 transition-colors whitespace-nowrap"
+              onMouseEnter={() => setMegaMenuOpen(false)}
+              onClick={() => onNavigatePage('iletisim')}
+              className={navLinkClass('iletisim')}
             >
               Bilgi &amp; İletişim
             </button>
           </nav>
 
-          {/* Right: Action Buttons (Strictly Single Line, Non-Wrapping) */}
+          {/* Right: Action Buttons (Dedicated Pages for Compare, Quote Cart, Inquiry Form) */}
           <div className="flex items-center gap-2 shrink-0">
-            {/* Compare Button */}
+            {/* Compare Page Button */}
             <button
               type="button"
-              onClick={onOpenCompare}
-              className="relative inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs xl:text-[13px] font-bold transition-all whitespace-nowrap shrink-0"
-              title="Ürün Karşılaştırma Listesi"
+              onClick={() => {
+                setMegaMenuOpen(false);
+                onNavigatePage('karsilastir');
+              }}
+              className={`relative inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs xl:text-[13px] font-bold transition-all whitespace-nowrap shrink-0 ${
+                currentPage === 'karsilastir'
+                  ? 'border-[#0284C7] bg-sky-50 text-[#0284C7]'
+                  : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+              }`}
+              title="Ürün Karşılaştırma Sayfası"
             >
               <GitCompare className="w-4 h-4 text-[#0284C7] shrink-0" />
               <span className="hidden md:inline">Karşılaştır</span>
@@ -220,12 +292,19 @@ export default function Navbar({
               )}
             </button>
 
-            {/* B2B Quote Cart Button */}
+            {/* B2B Quote Cart Page Button */}
             <button
               type="button"
-              onClick={onOpenCart}
-              className="relative inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs xl:text-[13px] font-bold transition-all whitespace-nowrap shrink-0"
-              title="Proje Teklif Sepeti"
+              onClick={() => {
+                setMegaMenuOpen(false);
+                onNavigatePage('teklif-sepeti');
+              }}
+              className={`relative inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs xl:text-[13px] font-bold transition-all whitespace-nowrap shrink-0 ${
+                currentPage === 'teklif-sepeti'
+                  ? 'border-[#E60012] bg-red-50 text-[#E60012]'
+                  : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+              }`}
+              title="Proje Teklif Sepeti Sayfası"
             >
               <ShoppingBag className="w-4 h-4 text-[#E60012] shrink-0" />
               <span className="hidden md:inline">Teklif Sepeti</span>
@@ -239,7 +318,10 @@ export default function Navbar({
             {/* Primary CTA: Ürün Bilgi Al Formu */}
             <button
               type="button"
-              onClick={() => onScrollToForm('bilgi')}
+              onClick={() => {
+                setMegaMenuOpen(false);
+                onNavigateToForm('bilgi');
+              }}
               className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#E60012] hover:bg-[#B9000E] text-white text-xs xl:text-[13px] font-extrabold shadow-sm hover:shadow transition-all whitespace-nowrap shrink-0"
             >
               <FileText className="w-4 h-4 shrink-0" />
@@ -259,12 +341,12 @@ export default function Navbar({
         </div>
       </div>
 
-      {/* Desktop 5-Column Mega Menu Dropdown */}
+      {/* Desktop 5-Column Mega Menu Dropdown - Hover Bridge + Timeout prevents premature closing */}
       {megaMenuOpen && (
         <div
-          onMouseEnter={() => setMegaMenuOpen(true)}
-          onMouseLeave={() => setMegaMenuOpen(false)}
-          className="hidden lg:block absolute left-0 w-full bg-white border-b border-slate-200 shadow-hover z-50 animate-fadeIn"
+          onMouseEnter={openMegaMenu}
+          onMouseLeave={scheduleCloseMegaMenu}
+          className="hidden lg:block absolute left-0 top-full w-full bg-white border-b border-slate-200 shadow-hover z-50 animate-fadeIn"
         >
           <div className="max-w-7xl mx-auto px-6 py-7">
             <div className="grid grid-cols-5 gap-6">
@@ -275,7 +357,7 @@ export default function Navbar({
                     <button
                       type="button"
                       onClick={() => handleMegaItemSelect(col.categoryKey, 'Tümü')}
-                      className="flex items-center gap-2.5 text-left group mb-3 pb-2.5 border-b border-slate-100"
+                      className="flex items-center gap-2.5 text-left group mb-3 pb-2.5 border-b border-slate-100 cursor-pointer"
                     >
                       <span className={`p-2 rounded-lg shrink-0 ${col.accent}`}>
                         <Icon className="w-4 h-4" />
@@ -290,7 +372,7 @@ export default function Navbar({
                           <button
                             type="button"
                             onClick={() => handleMegaItemSelect(col.categoryKey, item.query)}
-                            className="text-left text-xs text-slate-600 hover:text-[#E60012] hover:translate-x-0.5 transition-all leading-relaxed block w-full"
+                            className="text-left text-xs text-slate-600 hover:text-[#E60012] hover:bg-red-50/50 px-2 py-1.5 -mx-2 rounded-lg transition-all leading-relaxed block w-full cursor-pointer"
                           >
                             {item.label}
                           </button>
@@ -307,20 +389,30 @@ export default function Navbar({
               <div className="flex items-center gap-3">
                 <FanvilGoldPartnerBadge size="sm" />
                 <span className="text-xs text-slate-600">
-                  Toplam <strong>{totalProductCount}</strong> resmi Fanvil &amp; LINKVIL ürününde <strong>Gold Partner</strong> garantisi ve özel proje iskontosu.
+                  Toplam <strong>{totalProductCount}</strong> resmi Fanvil &amp; LINKVIL ürün grubunda (120+ model) <strong>Gold Partner</strong> garantisi.
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setMegaMenuOpen(false);
-                  onScrollToForm('bilgi');
-                }}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#E60012] hover:underline whitespace-nowrap"
-              >
-                <span>Ürün Hakkında Bilgi İste</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => handleMegaItemSelect('Tümü', 'Tümü')}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 hover:text-[#E60012] whitespace-nowrap"
+                >
+                  <span>Tüm Kataloğu Gör</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMegaMenuOpen(false);
+                    onNavigateToForm('bilgi');
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#E60012] hover:underline whitespace-nowrap"
+                >
+                  <span>Ürün Hakkında Bilgi İste</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -335,7 +427,7 @@ export default function Navbar({
               type="button"
               onClick={() => {
                 setMobileMenuOpen(false);
-                onScrollToForm('bilgi');
+                onNavigateToForm('bilgi');
               }}
               className="px-3.5 py-2 rounded-xl bg-[#E60012] text-white text-xs font-bold whitespace-nowrap"
             >
@@ -346,10 +438,24 @@ export default function Navbar({
           <div className="space-y-1">
             <button
               type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onNavigatePage('home');
+              }}
+              className={`w-full flex items-center gap-2 text-left px-3.5 py-3 rounded-xl text-sm font-bold ${
+                currentPage === 'home' ? 'bg-red-50 text-[#E60012]' : 'text-slate-800 hover:bg-slate-50'
+              }`}
+            >
+              <Home className="w-4 h-4" />
+              <span>Ana Sayfa</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setMobileSubmenuOpen(!mobileSubmenuOpen)}
               className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl bg-slate-50 text-slate-900 font-bold text-sm"
             >
-              <span>Ürün Kategorileri ({totalProductCount} Ürün)</span>
+              <span>Ürün Kategorileri ({totalProductCount} Ürün Grubu)</span>
               <ChevronDown
                 className={`w-4 h-4 transition-transform ${
                   mobileSubmenuOpen ? 'rotate-180 text-[#E60012]' : ''
@@ -387,43 +493,70 @@ export default function Navbar({
 
             <button
               type="button"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onScrollToSection('katalog');
-              }}
-              className="w-full text-left px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              onClick={() => handleMegaItemSelect('Tümü', 'Tümü')}
+              className={`w-full text-left px-3.5 py-3 rounded-xl text-sm font-semibold ${
+                currentPage === 'urunler' ? 'bg-red-50 text-[#E60012] font-bold' : 'text-slate-700 hover:bg-slate-50'
+              }`}
             >
-              Tüm Ürün Kataloğu
+              Tüm Ürün Kataloğu Sayfası
             </button>
             <button
               type="button"
               onClick={() => {
                 setMobileMenuOpen(false);
-                onScrollToSection('cozumler');
+                onNavigatePage('cozumler');
               }}
-              className="w-full text-left px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className={`w-full text-left px-3.5 py-3 rounded-xl text-sm font-semibold ${
+                currentPage === 'cozumler' ? 'bg-red-50 text-[#E60012] font-bold' : 'text-slate-700 hover:bg-slate-50'
+              }`}
             >
-              Sektörel Çözüm Sihirbazı
+              Sektörel Çözümler Sayfası
             </button>
             <button
               type="button"
               onClick={() => {
                 setMobileMenuOpen(false);
-                onScrollToSection('gold-partner');
+                onNavigatePage('gold-partner');
               }}
-              className="w-full text-left px-3.5 py-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className={`w-full text-left px-3.5 py-3 rounded-xl text-sm font-semibold ${
+                currentPage === 'gold-partner' ? 'bg-red-50 text-[#E60012] font-bold' : 'text-slate-700 hover:bg-slate-50'
+              }`}
             >
-              Fanvil Gold Partner Avantajları
+              Fanvil Gold Partner Sayfası
             </button>
             <button
               type="button"
               onClick={() => {
                 setMobileMenuOpen(false);
-                onScrollToForm('bilgi');
+                onNavigatePage('karsilastir');
+              }}
+              className={`w-full text-left px-3.5 py-3 rounded-xl text-sm font-semibold ${
+                currentPage === 'karsilastir' ? 'bg-sky-50 text-[#0284C7] font-bold' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              Model Karşılaştırma ({compareCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onNavigatePage('teklif-sepeti');
+              }}
+              className={`w-full text-left px-3.5 py-3 rounded-xl text-sm font-semibold ${
+                currentPage === 'teklif-sepeti' ? 'bg-red-50 text-[#E60012] font-bold' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              B2B Proje Teklif Sepeti ({cartCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onNavigateToForm('bilgi');
               }}
               className="w-full text-left px-3.5 py-3 rounded-xl text-sm font-bold text-[#E60012] bg-red-50/70"
             >
-              Ürün Bilgi &amp; Teklif Formu
+              Ürün Bilgi &amp; Teklif Formu Sayfası
             </button>
           </div>
         </div>

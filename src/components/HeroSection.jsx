@@ -51,7 +51,7 @@ const PBX_PLATFORMS = [
   { name: 'Grandstream UCM', desc: 'Tak-Çalıştır Entegrasyon' }
 ];
 
-export default function HeroSection({ onScrollToForm, onInquireProduct }) {
+export default function HeroSection({ onNavigatePage, onNavigateToForm, onInquireProduct }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const currentItem = HERO_SHOWCASE[activeSlide];
 
@@ -85,19 +85,20 @@ export default function HeroSection({ onScrollToForm, onInquireProduct }) {
               </p>
             </div>
 
-            {/* Primary CTA Buttons */}
+            {/* Primary CTA Buttons (Navigate to Dedicated Pages) */}
             <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 pt-1">
-              <a
-                href="#katalog"
+              <button
+                type="button"
+                onClick={() => onNavigatePage('urunler')}
                 className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white font-bold text-sm shadow-sm transition-all"
               >
                 <Layers className="w-4 h-4 text-amber-400" />
                 <span>Ürün Kataloğunu İncele</span>
-              </a>
+              </button>
 
               <button
                 type="button"
-                onClick={() => onScrollToForm('bilgi')}
+                onClick={() => onNavigateToForm('bilgi')}
                 className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#E60012] hover:bg-[#B9000E] text-white font-bold text-sm shadow-sm transition-all"
               >
                 <FileText className="w-4 h-4" />
@@ -106,7 +107,7 @@ export default function HeroSection({ onScrollToForm, onInquireProduct }) {
 
               <button
                 type="button"
-                onClick={() => onScrollToForm('bayi')}
+                onClick={() => onNavigateToForm('bayi')}
                 className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-semibold text-sm transition-all"
               >
                 <Award className="w-4 h-4 text-amber-600" />

@@ -6,16 +6,17 @@ import {
   FileText,
   ShoppingBag,
   Layers,
-  ExternalLink
+  ExternalLink,
+  Home
 } from 'lucide-react';
 import { FanvilLogo, FanvilGoldPartnerBadge } from './BrandLogos';
 
 export default function Footer({
+  currentPage,
+  onNavigatePage,
   onSelectCategory,
-  onScrollToSection,
-  onScrollToForm,
-  cartCount,
-  onOpenCart
+  onNavigateToForm,
+  cartCount
 }) {
   return (
     <>
@@ -87,46 +88,64 @@ export default function Footer({
               </ul>
             </div>
 
-            {/* Corporate & Solutions (2 Cols) */}
+            {/* Site Pages & Solutions (2 Cols) */}
             <div className="lg:col-span-2 space-y-3">
               <h4 className="text-xs font-extrabold uppercase tracking-wider text-white">
-                Proje &amp; Partner
+                Kurumsal Sayfalar
               </h4>
               <ul className="space-y-2 text-xs text-slate-400">
                 <li>
                   <button
                     type="button"
-                    onClick={() => onScrollToForm('bilgi')}
+                    onClick={() => onNavigatePage('home')}
                     className="hover:text-white transition-colors text-left"
                   >
-                    Ürün Bilgi &amp; Fiyat Al
+                    Ana Sayfa
                   </button>
                 </li>
                 <li>
                   <button
                     type="button"
-                    onClick={() => onScrollToForm('proje')}
+                    onClick={() => onNavigatePage('urunler')}
                     className="hover:text-white transition-colors text-left"
                   >
-                    FPRS Proje Kaydı
+                    Ürün Kataloğu
                   </button>
                 </li>
                 <li>
                   <button
                     type="button"
-                    onClick={() => onScrollToForm('bayi')}
+                    onClick={() => onNavigatePage('cozumler')}
                     className="hover:text-white transition-colors text-left"
                   >
-                    Alt Bayilik Başvurusu
+                    Sektörel Çözümler
                   </button>
                 </li>
                 <li>
                   <button
                     type="button"
-                    onClick={() => onScrollToSection('cozumler')}
+                    onClick={() => onNavigatePage('gold-partner')}
                     className="hover:text-white transition-colors text-left"
                   >
-                    Sektörel Çözüm Sihirbazı
+                    Gold Partner &amp; FPRS
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => onNavigatePage('karsilastir')}
+                    className="hover:text-white transition-colors text-left"
+                  >
+                    Model Karşılaştırma
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => onNavigatePage('teklif-sepeti')}
+                    className="hover:text-white transition-colors text-left"
+                  >
+                    Proje Teklif Sepeti
                   </button>
                 </li>
                 <li>
@@ -157,7 +176,7 @@ export default function Footer({
                   <PhoneCall className="w-4 h-4 text-[#E60012] shrink-0" />
                   <button
                     type="button"
-                    onClick={() => onScrollToForm('bilgi')}
+                    onClick={() => onNavigateToForm('bilgi')}
                     className="hover:text-white font-semibold text-left"
                   >
                     Kurumsal Proje &amp; Satış Hattı
@@ -172,7 +191,7 @@ export default function Footer({
               </div>
               <button
                 type="button"
-                onClick={() => onScrollToForm('bilgi')}
+                onClick={() => onNavigateToForm('bilgi')}
                 className="w-full py-2.5 px-4 rounded-xl bg-[#E60012] hover:bg-[#B9000E] text-white text-xs font-bold transition-colors mt-2"
               >
                 Hemen Ürün Bilgisi İste
@@ -193,28 +212,42 @@ export default function Footer({
         </div>
       </footer>
 
-      {/* Mobile Sticky Bottom Bar for 100% Mobile Ergonomics */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-3 py-2 shadow-hover grid grid-cols-3 gap-2">
+      {/* Mobile Sticky Bottom Bar for Multi-Page Navigation */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2.5 py-2 shadow-hover grid grid-cols-4 gap-1.5">
         <button
           type="button"
-          onClick={() => onScrollToSection('katalog')}
-          className="flex flex-col items-center justify-center py-1.5 rounded-xl bg-slate-100 text-slate-800 text-[11px] font-bold"
+          onClick={() => onNavigatePage('home')}
+          className={`flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold ${
+            currentPage === 'home' ? 'bg-red-50 text-[#E60012]' : 'bg-slate-100 text-slate-700'
+          }`}
         >
-          <Layers className="w-4 h-4 text-slate-700 mb-0.5" />
+          <Home className="w-4 h-4 mb-0.5" />
+          <span>Ana Sayfa</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => onNavigatePage('urunler')}
+          className={`flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold ${
+            currentPage === 'urunler' ? 'bg-red-50 text-[#E60012]' : 'bg-slate-100 text-slate-700'
+          }`}
+        >
+          <Layers className="w-4 h-4 mb-0.5" />
           <span>Katalog</span>
         </button>
         <button
           type="button"
-          onClick={onOpenCart}
-          className="relative flex flex-col items-center justify-center py-1.5 rounded-xl bg-slate-100 text-slate-800 text-[11px] font-bold"
+          onClick={() => onNavigatePage('teklif-sepeti')}
+          className={`relative flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold ${
+            currentPage === 'teklif-sepeti' ? 'bg-red-50 text-[#E60012]' : 'bg-slate-100 text-slate-700'
+          }`}
         >
-          <ShoppingBag className="w-4 h-4 text-[#0F172A] mb-0.5" />
+          <ShoppingBag className="w-4 h-4 mb-0.5" />
           <span>Sepet ({cartCount})</span>
         </button>
         <button
           type="button"
-          onClick={() => onScrollToForm('bilgi')}
-          className="flex flex-col items-center justify-center py-1.5 rounded-xl bg-[#E60012] text-white text-[11px] font-bold"
+          onClick={() => onNavigateToForm('bilgi')}
+          className="flex flex-col items-center justify-center py-1.5 rounded-xl bg-[#E60012] text-white text-[10px] font-bold"
         >
           <FileText className="w-4 h-4 mb-0.5" />
           <span>Bilgi Al</span>
