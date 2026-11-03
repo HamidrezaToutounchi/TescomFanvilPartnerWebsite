@@ -9,6 +9,10 @@ RUN npm install
 COPY index.html vite.config.js tailwind.config.js postcss.config.js ./
 COPY public ./public
 COPY src ./src
+
+ARG VITE_TURNSTILE_SITE_KEY
+ENV VITE_TURNSTILE_SITE_KEY=${VITE_TURNSTILE_SITE_KEY}
+
 RUN npm run build
 
 # 2. Aşama: Hafif Nginx Sunucusu (Container içi Port 80)

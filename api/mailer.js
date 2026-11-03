@@ -323,7 +323,8 @@ function buildLeadNotificationContent(lead) {
     timeStyle: 'medium'
   });
 
-  const subject = `Yeni Fanvil Lead – ${lead.refCode} – ${lead.company}`;
+  const unverifiedPrefix = lead.captchaStatus === 'unverified' ? '[DOĞRULANMADI] ' : '';
+  const subject = `${unverifiedPrefix}Yeni Fanvil Lead – ${lead.refCode} – ${lead.company}`;
 
   const cartItems = Array.isArray(lead.cartSnapshot) ? lead.cartSnapshot : [];
   const cartText =

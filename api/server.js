@@ -29,6 +29,7 @@ const PORT = Number(process.env.PORT) || 3000;
 const MONGO_URI = process.env.MONGO_URI;
 const SESSION_SECRET = process.env.SESSION_SECRET;
 const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || 'https://fanvilpartner.com';
+const TURNSTILE_SECRET_KEY = (process.env.TURNSTILE_SECRET_KEY || '').trim();
 
 if (!MONGO_URI) {
   console.error('[FATAL] MONGO_URI environment variable is required.');
@@ -40,6 +41,12 @@ if (!SESSION_SECRET || SESSION_SECRET.length < 32) {
     '[FATAL] SESSION_SECRET environment variable is required (at least 32 characters).'
   );
   process.exit(1);
+}
+
+if (!TURNSTILE_SECRET_KEY) {
+  console.warn(
+    '[WARN] TURNSTILE_SECRET_KEY tanımlı değil; Cloudflare Turnstile doğrulaması atlanacak (captchaStatus="disabled").'
+  );
 }
 
 // Note: Do NOT enable mongoose.set('sanitizeFilter', true) globally because it
@@ -131,7 +138,8 @@ const leadZodSchema = z
     kvkkAccepted: z.literal(true, {
       errorMap: () => ({ message: 'KVKK aydınlatma metnini onaylamanız gerekmektedir.' })
     }),
-    website: z.string().max(200).optional().default('')
+    website: z.string().max(200).optional().default(''),
+    turnstileToken: z.string().max(2048).optional()
   })
   .strict();
 
@@ -232,7 +240,88 @@ const leadsRateLimiter = rateLimit({
 });
 
 // ---------------------------------------------------------------------------
-// 5. Public Health & Lead Capture Endpoints
+// 5. Cloudflare Turnstile Verification Helper (Fail-Open on Network/Timeout)
+// ---------------------------------------------------------------------------
+async function verifyTurnstileToken(token, remoteIp) {
+  if (!TURNSTILE_SECRET_KEY) {
+    return { allowed: true, captchaStatus: 'disabled' };
+  }
+
+  const trimmedToken = typeof token === 'string' ? token.trim() : '';
+  if (!trimmedToken) {
+    console.warn(
+      `[TURNSTILE-UNVERIFIED] Token gönderilmedi (fail-open, IP: ${remoteIp}).`
+    );
+    return { allowed: true, captchaStatus: 'unverified' };
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const bodyParams = new URLSearchParams({
+      secret: TURNSTILE_SECRET_KEY,
+      response: trimmedToken,
+      remoteip: remoteIp || '',
+      idempotency_key: crypto.randomUUID()
+    });
+
+    const response = await fetch(
+      'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: bodyParams.toString(),
+        signal: controller.signal
+      }
+    );
+
+    if (response.status >= 500) {
+      console.warn(
+        `[TURNSTILE-UNVERIFIED] Cloudflare siteverify HTTP ${response.status} döndü (fail-open, IP: ${remoteIp}).`
+      );
+      return { allowed: true, captchaStatus: 'unverified' };
+    }
+
+    const result = await response.json();
+    const errorCodes = Array.isArray(result?.['error-codes'])
+      ? result['error-codes']
+      : [];
+
+    if (!result || result.success !== true) {
+      console.warn(
+        `[TURNSTILE-REJECT] Doğrulama başarısız (IP: ${remoteIp}, error-codes: ${
+          errorCodes.join(', ') || 'none'
+        }).`
+      );
+      return { allowed: false, errorCodes };
+    }
+
+    const hostname = String(result.hostname || '').trim().toLowerCase();
+    const action = String(result.action || '').trim();
+
+    if (!ALLOWED_HOSTS.has(hostname) || action !== 'lead_form') {
+      console.warn(
+        `[TURNSTILE-REJECT] Hostname/Action uyuşmazlığı (IP: ${remoteIp}, hostname: ${hostname}, action: ${action}).`
+      );
+      return { allowed: false, errorCodes: ['hostname_or_action_mismatch'] };
+    }
+
+    return { allowed: true, captchaStatus: 'passed' };
+  } catch (err) {
+    console.warn(
+      `[TURNSTILE-UNVERIFIED] Cloudflare siteverify erişim hatası/timeout (fail-open, IP: ${remoteIp}): ${err.message}`
+    );
+    return { allowed: true, captchaStatus: 'unverified' };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 6. Public Health & Lead Capture Endpoints
 // ---------------------------------------------------------------------------
 app.get('/api/health', (_req, res) => {
   const isConnected = mongoose.connection.readyState === 1;
@@ -278,7 +367,37 @@ app.post('/api/leads', leadsRateLimiter, async (req, res) => {
     const clientIp = String(normalizeClientIp(req.ip) || req.ip || '').slice(0, 100);
     const userAgent = String(req.get('user-agent') || '').slice(0, 300);
 
-    // 3. Save with refCode collision retry (max 3 attempts)
+    // 3. Cloudflare Turnstile verification (fail-open on network/missing token, 400 on invalid token)
+    const turnstileCheck = await verifyTurnstileToken(validData.turnstileToken, clientIp);
+    if (!turnstileCheck.allowed) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Güvenlik doğrulaması başarısız, lütfen sayfayı yenileyip tekrar deneyin.'
+      });
+    }
+
+    const captchaStatus = turnstileCheck.captchaStatus;
+
+    // 4. Extra rate limit for unverified leads: max 3 per hour per IP
+    if (captchaStatus === 'unverified') {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      const unverifiedRecentCount = await Lead.countDocuments({
+        ip: clientIp,
+        captchaStatus: 'unverified',
+        createdAt: { $gte: oneHourAgo }
+      });
+      if (unverifiedRecentCount >= 3) {
+        console.warn(
+          `[TURNSTILE-RATE-LIMIT] IP (${clientIp}) saatlik 3 doğrulanmamış (unverified) lead sınırını aştı.`
+        );
+        return res.status(429).json({
+          ok: false,
+          error: 'Çok fazla doğrulanmamış talep gönderildi. Lütfen sayfayı yenileyip tekrar deneyin.'
+        });
+      }
+    }
+
+    // 5. Save with refCode collision retry (max 3 attempts)
     let savedLead = null;
     let lastErr = null;
 
@@ -300,6 +419,7 @@ app.post('/api/leads', leadsRateLimiter, async (req, res) => {
           cartSnapshot: validData.cartSnapshot,
           kvkkAccepted: validData.kvkkAccepted,
           status: 'new',
+          captchaStatus,
           isRead: false,
           notes: [],
           ip: clientIp,

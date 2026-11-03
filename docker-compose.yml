@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_TURNSTILE_SITE_KEY: ${VITE_TURNSTILE_SITE_KEY:-0x4AAAAAAFx74SjnJPAPh9Fk}
     container_name: tescom-fanvil-web
     restart: unless-stopped
     depends_on:
@@ -32,6 +34,7 @@ services:
       SESSION_SECRET: ${SESSION_SECRET}
       SETTINGS_ENC_KEY: ${SETTINGS_ENC_KEY}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://fanvilpartner.com}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
     depends_on:
       fanvil-mongo:
         condition: service_healthy

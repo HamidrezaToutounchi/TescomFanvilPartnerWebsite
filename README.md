@@ -60,6 +60,14 @@ docker exec -it fanvil-api node scripts/create-admin.js admin
 
 ---
 
+## 4. Bot Koruması (Cloudflare Turnstile) & KVKK Notu
+
+- **Fail-Open Davranışı:** Cloudflare Turnstile widget'ı yalnızca form bileşeni (`src/components/ProductInquiryForm.jsx`) yüklendiğinde dinamik olarak çağrılır. Cloudflare'e ulaşılamazsa (10 sn script/challenge zaman aşımı veya backend 5 sn `siteverify` ağ hatası) müşteri talebi **asla kaybolmaz**; `captchaStatus: "unverified"` olarak kaydedilir, bildirim mailinin konusuna `[DOĞRULANMADI]` eklenir ve yönetim panelinde sarı **"Doğrulanmadı"** rozetiyle işaretlenir.
+- **Sahte Token Koruması:** Geçersiz veya süresi dolmuş token ya da `hostname`/`action` uyuşmazlığı durumunda `400` döndürülür ve kayıt yapılmaz.
+- **KVKK Notu:** Turnstile kullanıldığı için aydınlatma metninde Cloudflare'e (yurt dışı) teknik veri aktarımı belirtilmeli.
+
+---
+
 ## 4. Test ve Doğrulama Adımları
 
 1. **Doğrudan IP:8090 Erişiminin Kapandığını Doğrulama:**

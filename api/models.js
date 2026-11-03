@@ -48,6 +48,11 @@ const leadMongooseSchema = new mongoose.Schema(
       default: 'new',
       enum: ['new', 'contacted', 'quoted', 'won', 'lost']
     },
+    captchaStatus: {
+      type: String,
+      default: 'disabled',
+      enum: ['passed', 'unverified', 'disabled']
+    },
     isRead: { type: Boolean, default: false },
     notes: { type: [leadNoteSchema], default: [] },
     ip: { type: String, default: '', maxlength: 100 },
@@ -64,6 +69,8 @@ leadMongooseSchema.index({ createdAt: -1 });
 leadMongooseSchema.index({ email: 1 });
 leadMongooseSchema.index({ status: 1, createdAt: -1 });
 leadMongooseSchema.index({ requestType: 1, createdAt: -1 });
+leadMongooseSchema.index({ captchaStatus: 1, createdAt: -1 });
+leadMongooseSchema.index({ ip: 1, captchaStatus: 1, createdAt: -1 });
 
 // 2. Allowed IPs Collection ("allowed_ips")
 const allowedIpSchema = new mongoose.Schema(

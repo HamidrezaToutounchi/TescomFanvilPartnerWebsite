@@ -290,6 +290,13 @@ function buildLeadsFilter(query) {
     filter.status = String(query.status);
   }
 
+  if (
+    query.captchaStatus &&
+    ['passed', 'unverified', 'disabled'].includes(String(query.captchaStatus))
+  ) {
+    filter.captchaStatus = String(query.captchaStatus);
+  }
+
   if (query.from || query.to) {
     filter.createdAt = {};
     if (query.from) {

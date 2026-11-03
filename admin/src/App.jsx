@@ -47,6 +47,12 @@ const MAIL_STATUS_META = {
   skipped: { label: 'Atlandı (Ayar/Alıcı Yok)', cls: 'bg-slate-100 text-slate-600 border-slate-200' }
 };
 
+const CAPTCHA_META = {
+  passed: { label: 'Doğrulandı', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  unverified: { label: 'Doğrulanmadı', cls: 'bg-amber-100 text-amber-800 border-amber-300' },
+  disabled: { label: 'Kapalı', cls: 'bg-slate-100 text-slate-500 border-slate-200' }
+};
+
 async function apiFetch(path, options = {}) {
   const res = await fetch(path, {
     credentials: 'include',
@@ -427,6 +433,7 @@ function LeadsListView({ onSelectLead, onUnauthorized }) {
   const [q, setQ] = useState('');
   const [requestType, setRequestType] = useState('');
   const [status, setStatus] = useState('');
+  const [captchaStatus, setCaptchaStatus] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
 
@@ -437,11 +444,12 @@ function LeadsListView({ onSelectLead, onUnauthorized }) {
       if (q.trim()) params.set('q', q.trim());
       if (requestType) params.set('requestType', requestType);
       if (status) params.set('status', status);
+      if (captchaStatus) params.set('captchaStatus', captchaStatus);
       if (from) params.set('from', from);
       if (to) params.set('to', to);
       return params.toString();
     },
-    [page, q, requestType, status, from, to]
+    [page, q, requestType, status, captchaStatus, from, to]
   );
 
   const loadLeads = useCallback(
@@ -525,7 +533,7 @@ function LeadsListView({ onSelectLead, onUnauthorized }) {
       {/* Filter Bar */}
       <form
         onSubmit={handleFilterSubmit}
-        className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3"
+        className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3"
       >
         <div className="lg:col-span-2 relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -567,6 +575,20 @@ function LeadsListView({ onSelectLead, onUnauthorized }) {
           <option value="quoted">Teklif Verildi</option>
           <option value="won">Kazanıldı (Won)</option>
           <option value="lost">Kaybedildi (Lost)</option>
+        </select>
+
+        <select
+          value={captchaStatus}
+          onChange={(e) => {
+            setCaptchaStatus(e.target.value);
+            setPage(1);
+          }}
+          className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs"
+        >
+          <option value="">Tüm Bot Koruması</option>
+          <option value="passed">Doğrulandı (passed)</option>
+          <option value="unverified">Doğrulanmadı (unverified)</option>
+          <option value="disabled">Kapalı (disabled)</option>
         </select>
 
         <input
@@ -630,6 +652,8 @@ function LeadsListView({ onSelectLead, onUnauthorized }) {
             ) : (
               items.map((lead) => {
                 const st = STATUS_META[lead.status] || STATUS_META.new;
+                const cp =
+                  CAPTCHA_META[lead.captchaStatus] || CAPTCHA_META.disabled;
                 const ms = lead.mailStatus
                   ? MAIL_STATUS_META[lead.mailStatus.status]
                   : null;
@@ -650,6 +674,12 @@ function LeadsListView({ onSelectLead, onUnauthorized }) {
                           />
                         )}
                         <span className="font-extrabold text-slate-900">{lead.refCode}</span>
+                        <span
+                          className={`inline-block px-1.5 py-0.5 rounded border text-[10px] font-bold ${cp.cls}`}
+                          title={`Turnstile: ${lead.captchaStatus || 'disabled'}`}
+                        >
+                          {cp.label}
+                        </span>
                       </div>
                       <div className="text-[11px] text-slate-500 mt-0.5">
                         {formatDateTR(lead.createdAt)}
@@ -841,6 +871,7 @@ function LeadDetailView({ leadId, isAdmin, onBack }) {
   }
 
   const st = STATUS_META[lead.status] || STATUS_META.new;
+  const cp = CAPTCHA_META[lead.captchaStatus] || CAPTCHA_META.disabled;
   const ms = mailJob ? MAIL_STATUS_META[mailJob.status] : null;
 
   return (
@@ -878,9 +909,17 @@ function LeadDetailView({ leadId, isAdmin, onBack }) {
                   Oluşturulma: {formatDateTR(lead.createdAt)} (Europe/Istanbul)
                 </p>
               </div>
-              <span className={`px-3 py-1 rounded-full border text-xs font-bold ${st.cls}`}>
-                {st.label}
-              </span>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`px-2.5 py-1 rounded-full border text-xs font-bold ${cp.cls}`}
+                  title={`Bot Koruması (Turnstile): ${lead.captchaStatus || 'disabled'}`}
+                >
+                  Bot Koruması: {cp.label}
+                </span>
+                <span className={`px-3 py-1 rounded-full border text-xs font-bold ${st.cls}`}>
+                  {st.label}
+                </span>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm">

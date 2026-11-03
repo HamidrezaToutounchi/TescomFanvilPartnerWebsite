@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Send,
   CheckCircle2,
@@ -31,6 +31,10 @@ const PBX_OPTIONS = [
   'Mevcut Analog Santral (2-Wire / Gateway Dönüşüm)'
 ];
 
+const TURNSTILE_SCRIPT_SRC =
+  'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+const TURNSTILE_SITE_KEY = (import.meta.env.VITE_TURNSTILE_SITE_KEY || '').trim();
+
 export default function ProductInquiryForm({
   products,
   activeFormTab,
@@ -55,6 +59,119 @@ export default function ProductInquiryForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [submittedData, setSubmittedData] = useState(null);
+
+  // Cloudflare Turnstile state (fail-open after 10s if script/challenge is unreachable)
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileBypass, setTurnstileBypass] = useState(!TURNSTILE_SITE_KEY);
+  const turnstileContainerRef = useRef(null);
+  const turnstileWidgetIdRef = useRef(null);
+
+  useEffect(() => {
+    if (!TURNSTILE_SITE_KEY || submittedData) {
+      setTurnstileBypass(true);
+      return undefined;
+    }
+
+    let isMounted = true;
+    setTurnstileToken('');
+    setTurnstileBypass(false);
+
+    // 10-second fail-open timer: if Cloudflare script or token doesn't load in 10s,
+    // allow submission without token so a real customer lead is NEVER lost.
+    const fallbackTimer = setTimeout(() => {
+      if (isMounted) {
+        setTurnstileBypass(true);
+      }
+    }, 10000);
+
+    const renderWidget = () => {
+      if (!isMounted || !turnstileContainerRef.current || !window.turnstile) return;
+      try {
+        if (turnstileWidgetIdRef.current !== null) {
+          window.turnstile.remove(turnstileWidgetIdRef.current);
+          turnstileWidgetIdRef.current = null;
+        }
+        turnstileWidgetIdRef.current = window.turnstile.render(
+          turnstileContainerRef.current,
+          {
+            sitekey: TURNSTILE_SITE_KEY,
+            action: 'lead_form',
+            appearance: 'interaction-only',
+            language: 'tr',
+            callback: (token) => {
+              if (!isMounted) return;
+              clearTimeout(fallbackTimer);
+              setTurnstileToken(token || '');
+            },
+            'expired-callback': () => {
+              if (!isMounted) return;
+              setTurnstileToken('');
+            },
+            'error-callback': () => {
+              if (!isMounted) return;
+              clearTimeout(fallbackTimer);
+              setTurnstileToken('');
+              setTurnstileBypass(true);
+            }
+          }
+        );
+      } catch (_err) {
+        if (isMounted) {
+          setTurnstileBypass(true);
+        }
+      }
+    };
+
+    if (window.turnstile) {
+      renderWidget();
+    } else {
+      let scriptEl = document.querySelector(`script[src="${TURNSTILE_SCRIPT_SRC}"]`);
+      if (!scriptEl) {
+        scriptEl = document.createElement('script');
+        scriptEl.src = TURNSTILE_SCRIPT_SRC;
+        scriptEl.async = true;
+        scriptEl.defer = true;
+        document.head.appendChild(scriptEl);
+      }
+      const onLoad = () => renderWidget();
+      const onError = () => {
+        if (isMounted) {
+          clearTimeout(fallbackTimer);
+          setTurnstileBypass(true);
+        }
+      };
+      scriptEl.addEventListener('load', onLoad);
+      scriptEl.addEventListener('error', onError);
+
+      return () => {
+        isMounted = false;
+        clearTimeout(fallbackTimer);
+        scriptEl.removeEventListener('load', onLoad);
+        scriptEl.removeEventListener('error', onError);
+        if (turnstileWidgetIdRef.current !== null && window.turnstile) {
+          try {
+            window.turnstile.remove(turnstileWidgetIdRef.current);
+          } catch (_e) {
+            // ignore
+          }
+          turnstileWidgetIdRef.current = null;
+        }
+      };
+    }
+
+    return () => {
+      isMounted = false;
+      clearTimeout(fallbackTimer);
+      if (turnstileWidgetIdRef.current !== null && window.turnstile) {
+        try {
+          window.turnstile.remove(turnstileWidgetIdRef.current);
+        } catch (_e) {
+          // ignore
+        }
+        turnstileWidgetIdRef.current = null;
+      }
+    };
+  }, [submittedData]);
 
   useEffect(() => {
     if (activeFormTab) {
@@ -99,7 +216,8 @@ export default function ProductInquiryForm({
       message: message.trim().slice(0, 3000),
       cartSnapshot: sanitizedCartSnapshot,
       kvkkAccepted: Boolean(kvkkAccepted),
-      website
+      website,
+      ...(turnstileToken ? { turnstileToken } : {})
     };
 
     try {
@@ -156,6 +274,15 @@ export default function ProductInquiryForm({
       );
     } finally {
       setIsSubmitting(false);
+      // Turnstile token is single-use; always reset after submission attempt
+      if (turnstileWidgetIdRef.current !== null && window.turnstile) {
+        try {
+          setTurnstileToken('');
+          window.turnstile.reset(turnstileWidgetIdRef.current);
+        } catch (_e) {
+          // ignore
+        }
+      }
     }
   };
 
@@ -533,14 +660,23 @@ export default function ProductInquiryForm({
                     </label>
                   </div>
 
+                  {/* Cloudflare Turnstile Widget Container (interaction-only) */}
+                  {TURNSTILE_SITE_KEY && (
+                    <div ref={turnstileContainerRef} className="min-h-[2px]" />
+                  )}
+
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || (!turnstileToken && !turnstileBypass)}
                     className="w-full py-4 px-6 rounded-xl bg-[#E60012] hover:bg-[#B9000E] disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-sm shadow-sm hover:shadow inline-flex items-center justify-center gap-2 transition-all"
                   >
                     <Send className="w-4 h-4" />
                     <span>
-                      {isSubmitting ? 'Gönderiliyor...' : 'Bilgi & Teklif Talebini Gönder'}
+                      {isSubmitting
+                        ? 'Gönderiliyor...'
+                        : !turnstileToken && !turnstileBypass
+                          ? 'Güvenlik Doğrulaması Hazırlanıyor...'
+                          : 'Bilgi & Teklif Talebini Gönder'}
                     </span>
                   </button>
                 </form>
