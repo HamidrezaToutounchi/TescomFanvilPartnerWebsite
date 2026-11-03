@@ -7,9 +7,60 @@ services:
     restart: unless-stopped
     ports:
       - "8090:80"
+    depends_on:
+      fanvil-api:
+        condition: service_healthy
     networks:
       - default
       - tescom-network
+
+  fanvil-api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: fanvil-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      MONGO_URI: ${MONGO_URI}
+    depends_on:
+      fanvil-mongo:
+        condition: service_healthy
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  fanvil-mongo:
+    image: mongo:7
+    container_name: fanvil-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: fanvil
+      MONGO_APP_USER: ${MONGO_APP_USER}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD}
+    volumes:
+      - fanvil_mongo_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "127.0.0.1:27017/test", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  fanvil_mongo_data:
+    name: fanvil_mongo_data
 
 networks:
   tescom-network:

@@ -9,7 +9,8 @@ import {
   Package,
   MessageSquare,
   Sparkles,
-  Trash2
+  Trash2,
+  AlertCircle
 } from 'lucide-react';
 import { FanvilGoldPartnerBadge } from './BrandLogos';
 
@@ -50,6 +51,9 @@ export default function ProductInquiryForm({
   const [projectName, setProjectName] = useState('');
   const [message, setMessage] = useState('');
   const [kvkkAccepted, setKvkkAccepted] = useState(true);
+  const [website, setWebsite] = useState(''); // Honeypot field
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [submittedData, setSubmittedData] = useState(null);
 
   useEffect(() => {
@@ -63,27 +67,96 @@ export default function ProductInquiryForm({
       setSelectedProduct(selectedProductForInquiry);
       setRequestType('bilgi');
       setSubmittedData(null);
+      setSubmitError('');
     }
   }, [selectedProductForInquiry]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const refCode = `FVL-${Math.floor(100000 + Math.random() * 900000)}`;
-    setSubmittedData({
-      refCode,
-      requestType: REQUEST_TYPES.find((r) => r.id === requestType)?.label,
-      fullName,
-      company,
-      email,
-      phone,
-      selectedProduct: selectedProduct || 'Genel Fanvil & LINKVIL Ürün Ailesi',
-      quantity,
-      pbxSystem,
-      projectName,
-      message,
-      cartSnapshot: [...cartItems],
-      createdAt: new Date().toLocaleString('tr-TR')
-    });
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    const sanitizedCartSnapshot = cartItems.slice(0, 50).map(({ product, qty }) => ({
+      model: String(product?.model || '').trim().slice(0, 100),
+      qty: Math.min(10000, Math.max(1, Math.trunc(Number(qty) || 1)))
+    }));
+
+    const resolvedProduct =
+      (selectedProduct && selectedProduct.trim()) || 'Genel Fanvil & LINKVIL Ürün Ailesi';
+
+    const payload = {
+      requestType,
+      fullName: fullName.trim(),
+      company: company.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      selectedProduct: resolvedProduct.slice(0, 200),
+      quantity: String(quantity || '').slice(0, 200),
+      pbxSystem: String(pbxSystem || '').slice(0, 200),
+      projectName: projectName.trim().slice(0, 200),
+      message: message.trim().slice(0, 3000),
+      cartSnapshot: sanitizedCartSnapshot,
+      kvkkAccepted: Boolean(kvkkAccepted),
+      website
+    };
+
+    try {
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_parseErr) {
+        data = null;
+      }
+
+      if (response.status === 429) {
+        setSubmitError(
+          data?.error ||
+            'Çok fazla talep gönderdiniz. Lütfen 15 dakika sonra tekrar deneyin.'
+        );
+        return;
+      }
+
+      if (!response.ok || !data || data.ok !== true || !data.refCode) {
+        setSubmitError(
+          data?.error ||
+            'Talebiniz gönderilirken bir hata oluştu. Lütfen alanları kontrol edip tekrar deneyin.'
+        );
+        return;
+      }
+
+      setSubmittedData({
+        refCode: data.refCode,
+        requestType: REQUEST_TYPES.find((r) => r.id === requestType)?.label || requestType,
+        fullName: payload.fullName,
+        company: payload.company,
+        email: payload.email,
+        phone: payload.phone,
+        selectedProduct: payload.selectedProduct,
+        quantity: payload.quantity,
+        pbxSystem: payload.pbxSystem,
+        projectName: payload.projectName,
+        message: payload.message,
+        cartSnapshot: sanitizedCartSnapshot,
+        createdAt: new Date().toLocaleString('tr-TR')
+      });
+    } catch (_err) {
+      setSubmitError(
+        'Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -176,13 +249,13 @@ export default function ProductInquiryForm({
                           Proje Teklif Sepeti Kalemleri:
                         </span>
                         <div className="space-y-1">
-                          {submittedData.cartSnapshot.map(({ product, qty }) => (
+                          {submittedData.cartSnapshot.map((item, idx) => (
                             <div
-                              key={product.id}
+                              key={`${item.model}-${idx}`}
                               className="flex justify-between bg-white px-3 py-1.5 rounded-lg border border-slate-200"
                             >
-                              <span className="font-semibold text-slate-800">{product.model}</span>
-                              <span className="font-bold text-[#E60012]">{qty} Adet</span>
+                              <span className="font-semibold text-slate-800">{item.model}</span>
+                              <span className="font-bold text-[#E60012]">{item.qty} Adet</span>
                             </div>
                           ))}
                         </div>
@@ -200,7 +273,10 @@ export default function ProductInquiryForm({
                     </button>
                     <button
                       type="button"
-                      onClick={() => setSubmittedData(null)}
+                      onClick={() => {
+                        setSubmittedData(null);
+                        setSubmitError('');
+                      }}
                       className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
                     >
                       Yeni Bilgi Talebi Oluştur
@@ -209,6 +285,34 @@ export default function ProductInquiryForm({
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-5">
+                  {/* Honeypot Input (Hidden from real users, traps bots) */}
+                  <div
+                    className="hidden"
+                    style={{ display: 'none' }}
+                    aria-hidden="true"
+                  >
+                    <label htmlFor="website-hp">Website</label>
+                    <input
+                      id="website-hp"
+                      type="text"
+                      name="website"
+                      value={website}
+                      onChange={(e) => setWebsite(e.target.value)}
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
+                  </div>
+
+                  {submitError && (
+                    <div
+                      role="alert"
+                      className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm font-semibold flex items-start gap-2.5"
+                    >
+                      <AlertCircle className="w-4 h-4 text-[#E60012] shrink-0 mt-0.5" />
+                      <span>{submitError}</span>
+                    </div>
+                  )}
+
                   {/* Request Type Selector Tabs */}
                   <div>
                     <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-500 mb-2">
@@ -246,6 +350,7 @@ export default function ProductInquiryForm({
                         <input
                           type="text"
                           list="fanvil-models-list"
+                          maxLength={200}
                           value={selectedProduct}
                           onChange={(e) => setSelectedProduct(e.target.value)}
                           placeholder="Ürün seçin veya yazın (örn. Fanvil V67, i68, X303P)..."
@@ -292,6 +397,8 @@ export default function ProductInquiryForm({
                         <input
                           type="text"
                           required
+                          minLength={2}
+                          maxLength={120}
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
                           placeholder="Ad Soyad"
@@ -309,6 +416,8 @@ export default function ProductInquiryForm({
                         <input
                           type="text"
                           required
+                          minLength={2}
+                          maxLength={120}
                           value={company}
                           onChange={(e) => setCompany(e.target.value)}
                           placeholder="Firma veya Kurum Ünvanı"
@@ -328,6 +437,7 @@ export default function ProductInquiryForm({
                         <input
                           type="email"
                           required
+                          maxLength={254}
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="ornek@firma.com"
@@ -345,6 +455,8 @@ export default function ProductInquiryForm({
                         <input
                           type="tel"
                           required
+                          minLength={7}
+                          maxLength={20}
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
                           placeholder="05XX XXX XX XX"
@@ -379,6 +491,7 @@ export default function ProductInquiryForm({
                       </label>
                       <input
                         type="text"
+                        maxLength={200}
                         value={projectName}
                         onChange={(e) => setProjectName(e.target.value)}
                         placeholder="Örn: İstanbul - 120 Odalı Otel Projesi"
@@ -396,6 +509,7 @@ export default function ProductInquiryForm({
                       <MessageSquare className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                       <textarea
                         rows="3"
+                        maxLength={3000}
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         placeholder="Ürün teknik özellikleri, stok durumu, 2-Wire dönüşüm veya toplu fiyat teklifi hakkındaki sorunuzu buraya yazabilirsiniz..."
@@ -421,10 +535,13 @@ export default function ProductInquiryForm({
 
                   <button
                     type="submit"
-                    className="w-full py-4 px-6 rounded-xl bg-[#E60012] hover:bg-[#B9000E] text-white font-extrabold text-sm shadow-sm hover:shadow inline-flex items-center justify-center gap-2 transition-all"
+                    disabled={isSubmitting}
+                    className="w-full py-4 px-6 rounded-xl bg-[#E60012] hover:bg-[#B9000E] disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-sm shadow-sm hover:shadow inline-flex items-center justify-center gap-2 transition-all"
                   >
                     <Send className="w-4 h-4" />
-                    <span>Bilgi &amp; Teklif Talebini Gönder</span>
+                    <span>
+                      {isSubmitting ? 'Gönderiliyor...' : 'Bilgi & Teklif Talebini Gönder'}
+                    </span>
                   </button>
                 </form>
               )}
