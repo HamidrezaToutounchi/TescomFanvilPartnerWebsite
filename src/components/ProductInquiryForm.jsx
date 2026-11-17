@@ -40,7 +40,8 @@ export default function ProductInquiryForm({
   formHighlightPulse,
   cartItems,
   onUpdateCartQty,
-  onRemoveCartItem
+  onRemoveCartItem,
+  onSuccess
 }) {
   const [requestType, setRequestType] = useState('bilgi');
   const [fullName, setFullName] = useState('');
@@ -269,6 +270,9 @@ export default function ProductInquiryForm({
         cartSnapshot: sanitizedCartSnapshot,
         createdAt: new Date().toLocaleString('tr-TR')
       });
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (_err) {
       setSubmitError(
         'Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.'

@@ -926,3 +926,89 @@ export function KvkkPage() {
     </section>
   );
 }
+
+export function SuccessPage({ onGoHome, onNavigateCatalog }) {
+  const phone = "0850 850 18 81";
+  const whatsappUrl = `https://wa.me/908508501881?text=${encodeURIComponent(
+    "Merhaba, az önce fanvilpartner.com üzerinden kurumsal teklif formu gönderdim. Bilgi almak istiyorum."
+  )}`;
+
+  return (
+    <div className="py-12 sm:py-20 bg-slate-50 text-slate-900 min-h-[80vh] flex items-center justify-center">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 w-full">
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-12 shadow-xl text-center space-y-6">
+          <div className="w-20 h-20 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-sm">
+            <CheckCircle2 className="w-12 h-12" />
+          </div>
+
+          <div className="space-y-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>Talebiniz Başarıyla Alındı</span>
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Teklif Talebiniz Başarıyla Alındı!
+            </h1>
+            <p className="text-sm sm:text-base text-slate-600 max-w-lg mx-auto leading-relaxed">
+              Yetkili Fanvil Gold Partner mühendislik ve satış masamız en geç <strong>2 iş saati</strong> içinde sizinle iletişime geçerek resmi teklif ve demo cihaz sürecini başlatacaktır.
+            </p>
+          </div>
+
+          <div className="bg-slate-50 rounded-2xl p-4 sm:p-5 border border-slate-200 text-left text-xs sm:text-sm space-y-2 max-w-md mx-auto">
+            <div className="flex items-center justify-between text-slate-500 text-[11px]">
+              <span>Ortalama Yanıt Süresi</span>
+              <strong className="text-slate-900 font-bold">&lt; 2 İş Saati</strong>
+            </div>
+            <div className="flex items-center justify-between text-slate-500 text-[11px]">
+              <span>Kurumsal Proje Masası</span>
+              <strong className="text-slate-900 font-bold">Fanvil &amp; LINKVIL Türkiye Gold Partner</strong>
+            </div>
+            <div className="flex items-center justify-between text-slate-500 text-[11px]">
+              <span>Doğrudan Destek Hattı</span>
+              <strong className="text-[#E60012] font-bold">{phone}</strong>
+            </div>
+          </div>
+
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs sm:text-sm shadow-md transition-all active:scale-[0.98]"
+            >
+              <span>WhatsApp&apos;tan Hızlı İletişime Geç</span>
+            </a>
+
+            <a
+              href="tel:+908508501881"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm shadow-md transition-all active:scale-[0.98]"
+            >
+              <Phone className="w-4 h-4 text-amber-400" />
+              <span>{phone} Ara</span>
+            </a>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-center gap-6 text-xs font-semibold text-slate-500">
+            <button
+              type="button"
+              onClick={onGoHome}
+              className="hover:text-[#E60012] flex items-center gap-1.5 transition-colors"
+            >
+              <Home className="w-3.5 h-3.5" />
+              <span>Ana Sayfa</span>
+            </button>
+            <button
+              type="button"
+              onClick={onNavigateCatalog}
+              className="hover:text-[#E60012] flex items-center gap-1.5 transition-colors"
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>Tüm Katalog</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

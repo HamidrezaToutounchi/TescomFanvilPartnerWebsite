@@ -12,7 +12,8 @@ import {
   HomeOverviewSection,
   ComparePage,
   QuoteCartPage,
-  KvkkPage
+  KvkkPage,
+  SuccessPage
 } from './components/DedicatedPages';
 import Footer from './components/Footer';
 
@@ -24,13 +25,17 @@ const VALID_PAGES = [
   'karsilastir',
   'teklif-sepeti',
   'iletisim',
-  'kvkk'
+  'kvkk',
+  'basarili'
 ];
 
 function resolvePageFromLocation() {
   const pathname = window.location.pathname.replace(/\/+$/, '');
   if (pathname === '/kvkk') {
     return 'kvkk';
+  }
+  if (pathname === '/basarili') {
+    return 'basarili';
   }
   const hash = window.location.hash.replace('#/', '').replace('#', '');
   return VALID_PAGES.includes(hash) ? hash : 'home';
@@ -77,6 +82,8 @@ export default function App() {
     setCurrentPage(target);
     if (target === 'kvkk') {
       window.history.pushState(null, '', '/kvkk');
+    } else if (target === 'basarili') {
+      window.history.pushState(null, '', '/basarili');
     } else {
       window.history.pushState(null, '', target === 'home' ? '/#/' : `/#/${target}`);
     }
@@ -290,6 +297,7 @@ export default function App() {
               cartItems={cartItems}
               onUpdateCartQty={handleUpdateCartQty}
               onRemoveCartItem={handleRemoveCartItem}
+              onSuccess={() => handleNavigatePage('basarili')}
             />
           </>
         )}
@@ -305,6 +313,14 @@ export default function App() {
             />
             <KvkkPage />
           </>
+        )}
+
+        {/* 9. TEKLİF ALINDI BAŞARILI SAYFASI (/basarili) */}
+        {currentPage === 'basarili' && (
+          <SuccessPage
+            onGoHome={() => handleNavigatePage('home')}
+            onNavigateCatalog={() => handleNavigatePage('urunler')}
+          />
         )}
       </main>
 
