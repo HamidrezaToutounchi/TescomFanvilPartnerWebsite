@@ -273,6 +273,23 @@ export default function ProductInquiryForm({
       if (onSuccess) {
         onSuccess();
       }
+      if (typeof window !== 'undefined') {
+        if (window.dataLayer) {
+          window.dataLayer.push({
+            event: 'lead_form_submitted',
+            refCode: data.refCode,
+            requestType: payload.requestType,
+            product: payload.selectedProduct
+          });
+        }
+        if (typeof window.gtag === 'function') {
+          window.gtag('event', 'generate_lead', {
+            event_category: 'lead_form',
+            event_label: payload.selectedProduct,
+            value: data.refCode
+          });
+        }
+      }
     } catch (_err) {
       setSubmitError(
         'Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.'
